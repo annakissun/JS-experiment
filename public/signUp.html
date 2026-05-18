@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Insaynitea</title>
+    <link rel="icon" type="image/x-icon" href="img/coffee.ico">
+
+    <link rel="stylesheet" href="css/style.css">
+
+    <style>
+        /* Same styles as login */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #4b672f;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 2rem;
+        }
+        
+        .register-container {
+            background: #d8af81;
+            border-radius: 20px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        h1 {
+            color: #2c1810;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #2c1810;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #4b672f;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .register-btn {
+            width: 100%;
+            background: #4b672f;
+            color: white;
+            border: none;
+            padding: 0.75rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .register-btn:hover {
+            background: #2c1810;
+            transform: translateY(-2px);
+        }
+        
+        .back-link {
+            display: block;
+            margin-top: 1rem;
+            color: #2c1810;
+            text-decoration: none;
+        }
+        
+        .error-message, .success-message {
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+        
+        .error-message {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .success-message {
+            background: #4b672f;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="logo">☕</div>
+        <h1>Register New User</h1>
+        
+        <div id="error-message" class="error-message"></div>
+        <div id="success-message" class="success-message"></div>
+        
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="name" placeholder="Enter full name">
+        </div>
+        
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" id="username" placeholder="Choose a username">
+        </div>
+        
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" placeholder="Choose a password">
+        </div>
+        
+        <div class="form-group">
+            <label>Role</label>
+            <select id="role">
+                <option value="cashier">Cashier</option>
+                <option value="manager">Manager</option>
+            </select>
+        </div>
+        
+        <button class="register-btn" onclick="registerUser()">Sign Up!</button>
+        <a href="index.html" class="back-link">← Back to Homepage</a>
+    </div>
+
+    <script>
+        async function registerUser() {
+            const name = document.getElementById('name').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            
+            const errorDiv = document.getElementById('error-message');
+            const successDiv = document.getElementById('success-message');
+            
+            errorDiv.style.display = 'none';
+            successDiv.style.display = 'none';
+            
+            if (!name || !username || !password) {
+                errorDiv.textContent = 'Please fill in all fields';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, username, password, role })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    successDiv.textContent = 'Registration successful! Redirecting to login...';
+                    successDiv.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        window.location.href = role === 'manager' ? 'login-manager.html' : 'login-cashier.html';
+                    }, 2000);
+                } else {
+                    errorDiv.textContent = result.error || 'Registration failed';
+                    errorDiv.style.display = 'block';
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Server error. Please try again.';
+                errorDiv.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

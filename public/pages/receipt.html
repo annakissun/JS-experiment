@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt - Insaynitea</title>
+    <link rel="stylesheet" href="../css/receipt.css">
+    
+</head>
+<body>
+    <div>
+        <div class="receipt" id="receipt">
+            <div class="receipt-header">
+                <h1>☕ INSAYNITEA COFFEE ☕</h1>
+                <p id="receipt-date"></p>
+                <p id="receipt-order"></p>
+            </div>
+            
+            <div class="receipt-items" id="receipt-items"></div>
+            
+            <div class="receipt-total">
+                <div class="receipt-item">
+                    <span>TOTAL:</span>
+                    <span id="receipt-total">RM0.00</span>
+                </div>
+            </div>
+            
+            <div class="receipt-footer">
+                <p>Thank you for your order!</p>
+                <p>☕ Come again! ☕</p>
+            </div>
+        </div>
+        <button onclick="window.print()">🖨️ Print Receipt</button>
+        <button onclick="window.close()">✕ Close</button>
+    </div>
+    
+    <script>
+        // Get order data from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+        const total = urlParams.get('total');
+        const items = JSON.parse(decodeURIComponent(urlParams.get('items') || '[]'));
+        
+        document.getElementById('receipt-date').innerHTML = new Date().toLocaleString();
+        document.getElementById('receipt-order').innerHTML = `Order #${orderId}`;
+        document.getElementById('receipt-total').innerHTML = `RM${parseFloat(total).toFixed(2)}`;
+        
+        const itemsHtml = items.map(item => `
+            <div class="receipt-item">
+                <span>${item.name} x${item.quantity}</span>
+                <span>RM${(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+        `).join('');
+        
+        document.getElementById('receipt-items').innerHTML = itemsHtml;
+        
+        // Auto-print on load
+        setTimeout(() => window.print(), 500);
+    </script>
+</body>
+</html>

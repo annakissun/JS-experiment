@@ -1,0 +1,162 @@
+
+        .reports-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 2rem;
+        }
+        
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .date-range {
+            background: #d8af81;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+        
+        .date-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .date-group label {
+            font-weight: 600;
+            color: #2c1810;
+        }
+        
+        .date-range input, .date-range select {
+            padding: 0.5rem;
+            border-radius: 8px;
+            border: 2px solid #4b672f;
+            background: white;
+        }
+        
+        .generate-btn, .refresh-btn {
+            background: #4b672f;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .print-btn {
+            background: #2c1810;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: #d8af81;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c1810;
+        }
+        
+        .stat-label {
+            color: #2c1810;
+            opacity: 0.8;
+            margin-top: 0.5rem;
+        }
+        
+        .top-items-section {
+            background: #d8af81;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        
+        .top-items-section h2 {
+            margin-bottom: 1rem;
+            color: #2c1810;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .items-table th,
+        .items-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid rgba(44,24,16,0.2);
+        }
+        
+        .items-table th {
+            background: rgba(44,24,16,0.1);
+            font-weight: 600;
+        }
+        
+        .rank-1 {
+            background: rgba(255,215,0,0.2);
+            font-weight: bold;
+        }
+        
+        .rank-2 {
+            background: rgba(192,192,192,0.2);
+        }
+        
+        .rank-3 {
+            background: rgba(205,127,50,0.2);
+        }
+        
+        .back-btn {
+            background: #2c1810;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .total-sold {
+            margin-top: 1rem;
+            padding: 0.75rem;
+            background: rgba(44,24,16,0.1);
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+         .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        @media print {
+            .no-print { display: none; }
+            .reports-container { background: white; }
+            .stat-card, .top-items-section { background: #f0f0f0; }
+        }

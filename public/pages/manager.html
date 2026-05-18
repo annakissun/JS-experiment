@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard - Insaynitea</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/manager.css">
+</head>
+<body>
+    <div class="manager-container">
+        <div class="manager-header">
+            <h1>☕ Manager Dashboard</h1>
+            <div style="display: flex; gap: 1rem;">
+                <a href="order-history.html" class="back-btn">Order History</a>
+                <a href="reports.html" class="order-history-btn">Sales Reports</a>
+                <a href="users.html" class="order-history-btn">Manage Users</a>
+                <a href="../index.html" class="back-btn">← Logout</a>
+                
+            </div>
+        </div>
+
+        <div class="manager-form">
+            <h2>➕ Add New Item</h2>
+            <input type="text" id="item-name" placeholder="Item Name (e.g., ICED LATTE)">
+            <select id="item-category">
+                <option value="hot">🔥 Hot</option>
+                <option value="iced">❄️ Iced</option>
+            </select>
+            <input type="number" id="item-price" placeholder="Price (RM)" step="0.01">
+            <button class="add-order-btn" id="add-btn" style="width: 100%;">+ Add Item</button>
+        </div>
+
+        <div class="manager-form">
+            <h2>📋 Manage Menu Items</h2>
+            <div class="search-box">
+                <input type="text" id="search" placeholder="🔍 Search items...">
+            </div>
+            <div id="items-list" class="menu-items-list">
+                <div class="loading">Loading menu items...</div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/manager.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insaynitea Coffee Menu</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation buttons -->
+    <div style="text-align: right; margin-bottom: 1rem;">
+        <span>Welcome, <span id="user-name">Cashier</span></span>
+        <a href="index.html" class="manager-nav-btn" style="margin-left: 1rem;">← Logout</a>
+    </div>
+
+    <div class="menu-container">
+        <header>
+            <h1>WELCOME!</h1>
+        </header>
+
+        <div class="categories">
+            <button class="category-btn active" data-category="all">ALL</button>
+            <button class="category-btn" data-category="hot">HOT</button>
+            <button class="category-btn" data-category="iced">ICED</button>
+        </div>
+
+        <div class="menu-grid" id="menu-grid">
+            <div style="grid-column:1/-1; text-align:center; padding:2rem;">
+                Loading menu from database...
+            </div>
+        </div>
+
+        <div class="order-sidebar">
+            <h2>Your Order</h2>
+            <div class="order-items" id="order-items">
+                <p class="empty-message">No items added yet</p>
+            </div>
+            <div class="order-total">
+                <span>Total:</span>
+                <span id="total-price">RM0.00</span>
+            </div>
+            <button class="checkout-btn">Checkout</button>
+
+             <!-- ORDER HISTORY -->
+    <button class="order-history-btn" onclick="window.location.href='pages/order-history.html'">Order History</button>
+
+        </div>
+    </div>
+
+    <script src="js/script.js"></script>
+    <script>
+        // Display logged in user
+        const user = JSON.parse(sessionStorage.getItem('user'));
+        if (user && user.Name) {
+            document.getElementById('user-name').textContent = user.Name;
+        } else {
+            // If no user logged in, redirect to login
+            window.location.href = 'index.html';
+        }
+    </script>
+</body>
+</html>

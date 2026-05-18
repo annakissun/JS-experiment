@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Reports - Insaynitea</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/reports.css">
+    
+</head>
+
+<body>
+    <div class="reports-container">
+        <div class="report-header no-print">
+            <h1>📊 Sales Reports & Analytics</h1>
+            <a href="manager.html" class="back-btn">← Back to Manager Dashboard</a>
+        </div>
+        
+        <div class="date-range no-print">
+            <div class="date-group">
+                <label>Start Date</label>
+                <input type="date" id="start-date">
+            </div>
+            <div class="date-group">
+                <label>End Date</label>
+                <input type="date" id="end-date">
+            </div>
+            <div class="date-group">
+                <label>Show Top</label>
+                <select id="top-limit">
+                    <option value="5">Top 5 Items</option>
+                    <option value="10" selected>Top 10 Items</option>
+                    <option value="15">Top 15 Items</option>
+                </select>
+            </div>
+            <button onclick="generateReport()" class="generate-btn">📈 Generate Report</button>
+            <button onclick="window.print()" class="print-btn">🖨️ Print Report</button>
+        </div>
+        
+        <div id="report-content">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="total-orders">-</div>
+                    <div class="stat-label">Total Orders</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-revenue">-</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="total-items-sold">-</div>
+                    <div class="stat-label">Total Items Sold</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avg-order">-</div>
+                    <div class="stat-label">Average Order Value</div>
+                </div>
+            </div>
+            
+            <div class="top-items-section">
+                <h2>🏆 Top Selling Items</h2>
+                <div id="top-items-list">
+                    <div class="loading">Select dates and click Generate Report</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_URL = `${window.location.protocol}//${window.location.hostname}:3000/api`;
+        
+        async function generateReport() {
+            let startDate = document.getElementById('start-date').value;
+            let endDate = document.getElementById('end-date').value;
+            const limit = document.getElementById('top-limit').value;
+            
+            // If no dates selected, default to last 30 days
+            if (!startDate || !endDate) {
+                const end = new Date();
+                const start = new Date();
+                start.setDate(start.getDate() - 30);
+                
+                startDate = start.toISOString().split('T')[0];
+                endDate = end.toISOString().split('T')[0];
+                
+                document.getElementById('start-date').value = startDate;
+                document.getElementById('end-date').value = endDate;
+            }
+            
+            // Show loading state
+            document.getElementById('top-items-list').innerHTML = '<div class="loading">Loading report...</div>';
+            document.getElementById('total-orders').textContent = '...';
+            document.getElementById('total-revenue').textContent = '...';
+            document.getElementById('total-items-sold').textContent = '...';
+            document.getElementById('avg-order').textContent = '...';
+            
+            // Load both data sets in parallel
+            await Promise.all([
+                loadSalesStats(startDate, endDate),
+                loadTopItems(startDate, endDate, limit)
+            ]);
+        }
+        
+        async function loadSalesStats(startDate, endDate) {
+            try {
+                const url = `${API_URL}/sales-stats?startDate=${startDate}&endDate=${endDate}`;
+                console.log('Fetching stats from:', url);
+                
+                const response = await fetch(url);
+                const stats = await response.json();
+                
+                console.log('Stats received:', stats);
+                
+                document.getElementById('total-orders').textContent = stats.totalOrders || 0;
+                document.getElementById('total-revenue').textContent = `RM${(stats.totalRevenue || 0).toFixed(2)}`;
+                document.getElementById('total-items-sold').textContent = stats.totalItems || 0;
+                document.getElementById('avg-order').textContent = `RM${(stats.avgOrder || 0).toFixed(2)}`;
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                document.getElementById('total-orders').textContent = 'Error';
+                document.getElementById('total-revenue').textContent = 'Error';
+                document.getElementById('total-items-sold').textContent = 'Error';
+                document.getElementById('avg-order').textContent = 'Error';
+            }
+        }
+        
+        async function loadTopItems(startDate, endDate, limit) {
+            try {
+                const url = `${API_URL}/top-items?startDate=${startDate}&endDate=${endDate}&limit=${limit}`;
+                console.log('Fetching top items from:', url);
+                
+                const response = await fetch(url);
+                const items = await response.json();
+                
+                console.log('Top items received:', items);
+                
+                if (!items || items.length === 0) {
+                    document.getElementById('top-items-list').innerHTML = '<div class="loading">No orders found in this date range</div>';
+                    return;
+                }
+                
+                const totalSold = items.reduce((sum, item) => sum + (parseInt(item.TotalSold) || 0), 0);
+                
+                let html = `
+                    <table class="items-table">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Item Name</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Quantity Sold</th>
+                                <th>Revenue</th>
+                                <th>% of Sales</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                items.forEach((item, index) => {
+                    const sold = parseInt(item.TotalSold) || 0;
+                    const percentage = totalSold > 0 ? ((sold / totalSold) * 100).toFixed(1) : 0;
+                    let rankClass = '';
+                    let medal = '';
+                    
+                    if (index === 0) {
+                        rankClass = 'rank-1';
+                        medal = '🥇 ';
+                    } else if (index === 1) {
+                        rankClass = 'rank-2';
+                        medal = '🥈 ';
+                    } else if (index === 2) {
+                        rankClass = 'rank-3';
+                        medal = '🥉 ';
+                    }
+                    
+                    html += `
+                        <tr class="${rankClass}">
+                            <td><strong>#${index + 1}</strong> ${medal}</td>
+                            <td><strong>${item.ItemName}</strong></td>
+                            <td>${item.Category === 'hot' ? '🔥 Hot' : '❄️ Iced'}</td>
+                            <td>RM${parseFloat(item.Price).toFixed(2)}</td>
+                            <td><strong>${sold}</strong></td>
+                            <td>RM${parseFloat(item.TotalRevenue).toFixed(2)}</td>
+                            <td>${percentage}%</td>
+                        </tr>
+                    `;
+                });
+                
+                const totalRevenue = items.reduce((sum, i) => sum + parseFloat(i.TotalRevenue), 0);
+                
+                html += `
+                        </tbody>
+                    </table>
+                    <div class="total-sold">
+                        📊 Total Items Sold: ${totalSold} | 💰 Total Revenue: RM${totalRevenue.toFixed(2)}
+                    </div>
+                `;
+                
+                document.getElementById('top-items-list').innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading top items:', error);
+                document.getElementById('top-items-list').innerHTML = '<div class="loading">❌ Failed to load top selling items. Check console for details.</div>';
+            }
+        }
+        
+        // Load default report on page load (last 7 days)
+        async function loadDefaultReport() {
+            const end = new Date();
+            const start = new Date();
+            start.setDate(start.getDate() - 7);
+            
+            document.getElementById('start-date').value = start.toISOString().split('T')[0];
+            document.getElementById('end-date').value = end.toISOString().split('T')[0];
+            
+            await generateReport();
+        }
+        
+        // Make generateReport available globally
+        window.generateReport = generateReport;
+        
+        // Load when page opens
+        loadDefaultReport();
+    </script>
+</body>
+</html>

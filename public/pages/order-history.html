@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order History - Insaynitea</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/order-history.css">
+   
+</head>
+<body>
+    <div class="history-container">
+        <div class="history-header">
+            <h1>📋 Order History</h1>
+            <div>
+                <button onclick="refreshOrders()" class="refresh-btn">🔄 Refresh</button>
+                <a href="#" id="back-button" class="back-btn">← Loading...</a>
+            </div>
+        </div>
+        
+        <!-- Rest of your order history content -->
+        <div class="filters-section">
+            <div class="search-box">
+                <input type="text" id="search-order" placeholder="🔍 Search by Order ID...">
+            </div>
+        </div>
+
+        <div class="stats-summary">
+            <div class="stat-card">
+                <div class="stat-value" id="total-orders">0</div>
+                <div>Total Orders</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="total-revenue">RM0</div>
+                <div>Total Revenue</div>
+            </div>
+        </div>
+
+        <div class="orders-list" id="orders-list">
+            <div class="loading">Loading orders...</div>
+        </div>
+    </div>
+
+    <div id="order-modal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Order Details</h3>
+                <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+            </div>
+            <div id="order-details-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = `${window.location.protocol}//${window.location.hostname}:3000/api`;
+        let currentOrders = [];
+
+        // Smart back button based on user role
+        const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+        const backButton = document.getElementById('back-button');
+        
+        if (user.Role === 'manager') {
+            backButton.href = 'manager.html';
+            backButton.textContent = '← Back to Manager Dashboard';
+        } else {
+            backButton.href = '../pos.html';
+            backButton.textContent = '← Back to POS';
+        }
+
+        function showToast(message, type) {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        async function loadOrders() {
+            try {
+                const response = await fetch(`${API_URL}/orders`);
+                currentOrders = await response.json();
+                filterAndDisplay();
+            } catch (error) {
+                document.getElementById('orders-list').innerHTML = '<div class="loading">Failed to load orders</div>';
+            }
+        }
+
+        function filterAndDisplay() {
+            const searchTerm = document.getElementById('search-order').value.toLowerCase();
+            let filtered = currentOrders;
+            
+            if (searchTerm) {
+                filtered = currentOrders.filter(order => 
+                    order.OrderID.toString().includes(searchTerm)
+                );
+            }
+            
+            updateStats(filtered);
+            displayOrders(filtered);
+        }
+
+        function updateStats(orders) {
+            const total = orders.reduce((sum, order) => sum + parseFloat(order.TotalAmount), 0);
+            document.getElementById('total-orders').textContent = orders.length;
+            document.getElementById('total-revenue').textContent = `RM${total.toFixed(2)}`;
+        }
+
+        function displayOrders(orders) {
+            const container = document.getElementById('orders-list');
+            
+            if (orders.length === 0) {
+                container.innerHTML = '<div class="loading">No orders found</div>';
+                return;
+            }
+            
+            container.innerHTML = orders.map(order => `
+                <div class="order-card">
+                    <div class="order-info">
+                        <div class="order-id">Order #${order.OrderID}</div>
+                        <div class="order-date">${new Date(order.OrderDate).toLocaleString()}</div>
+                        <div>${order.ItemCount || 0} item(s)</div>
+                    </div>
+                    <div class="order-total">RM${parseFloat(order.TotalAmount).toFixed(2)}</div>
+                    <div>
+                        <button class="view-details-btn" onclick="viewOrderDetails(${order.OrderID})">📋 View</button>
+                        <button class="delete-order-btn" onclick="deleteOrder(${order.OrderID})">🗑️ Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function viewOrderDetails(orderId) {
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}`);
+                const data = await response.json();
+                
+                const detailsHtml = `
+                    <p><strong>Order ID:</strong> #${data.order.OrderID}</p>
+                    <p><strong>Date:</strong> ${new Date(data.order.OrderDate).toLocaleString()}</p>
+                    <p><strong>Total:</strong> RM${parseFloat(data.order.TotalAmount).toFixed(2)}</p>
+                    <hr>
+                    <h4>Items:</h4>
+                    ${data.items.map(item => `
+                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ddd;">
+                            <span>${item.ItemName}</span>
+                            <span>${item.Quantity} x RM${(item.Subtotal / item.Quantity).toFixed(2)} = RM${parseFloat(item.Subtotal).toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                `;
+                
+                document.getElementById('order-details-content').innerHTML = detailsHtml;
+                document.getElementById('order-modal').classList.add('active');
+            } catch (error) {
+                showToast('Failed to load order details', 'error');
+            }
+        }
+
+        async function deleteOrder(orderId) {
+            if (!confirm(`⚠️ Are you sure you want to delete Order #${orderId}?\n\nThis action CANNOT be undone!`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    showToast(`✅ Order #${orderId} deleted successfully!`, 'success');
+                    loadOrders();
+                } else {
+                    const error = await response.json();
+                    showToast(error.error || 'Failed to delete order', 'error');
+                }
+            } catch (error) {
+                showToast('Server error. Please try again.', 'error');
+            }
+        }
+
+        function refreshOrders() {
+            loadOrders();
+            showToast('Refreshing orders...', 'success');
+        }
+
+        function closeModal() {
+            document.getElementById('order-modal').classList.remove('active');
+        }
+
+        document.getElementById('search-order').addEventListener('input', filterAndDisplay);
+        
+        // Load orders when page opens
+        loadOrders();
+    </script>
+</body>
+</html>

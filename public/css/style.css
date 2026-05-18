@@ -1,0 +1,361 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #4b672f;
+    color: #2c1810;
+    padding: 2rem;
+}
+
+.menu-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 2rem;
+}
+
+/* Header */
+header {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #2c1810;
+}
+
+header h1 span {
+    color: #c8956c;
+}
+
+/* Category Filters */
+.categories {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.category-btn {
+    background: #b0aea7;
+    padding: 0.5rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 30px;
+}
+
+.category-btn.active,
+.category-btn:hover {
+    background: #2c1810;
+    color: #f5f0eb;
+}
+
+/* Grid container - makes squares */
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+    padding: 1rem;
+}
+
+/* Square tiles */
+.menu-tile {
+    background: #d8af81;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    aspect-ratio: 1 / 1;  /* THIS MAKES IT SQUARE! */
+}
+
+/* Make it lift on hover like a real POS */
+.menu-tile:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    background: #fefaf5;
+}
+
+/* Active/pressed effect */
+.menu-tile:active {
+    transform: translateY(0px);
+}
+
+/* Content inside square */
+.tile-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 1rem;
+    text-align: center;
+}
+
+/* Icon styling */
+.tile-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Coffee name */
+.tile-content h3 {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2c1810;
+    margin: 0.5rem 0;
+}
+
+/* Price */
+.tile-content .price {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #000000;
+    margin: 0.25rem 0;
+}
+
+/* ADD button */
+.add-order-btn {
+    background: #4b672f;
+    color: white;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 0.5rem;
+}
+
+.add-order-btn:hover {
+    background: #c8956c;
+}
+/* Order Sidebar */
+.order-sidebar {
+    background: #d8af81;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+}
+
+.order-sidebar h2 {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #f0e5dc;
+}
+
+.order-items {
+    min-height: 200px;
+    margin-bottom: 1rem;
+}
+
+.empty-message {
+    color: #a89080;
+    text-align: center;
+    padding: 2rem;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f0e5dc;
+}
+
+.order-item-name {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.order-item-price {
+    color: #2c1810;
+    font-weight: 600;
+}
+
+.remove-item {
+    background: none;
+    border: none;
+    color: #dc3545;
+    cursor: pointer;
+    font-size: 1.2rem;
+    margin-left: 0.5rem;
+    font-weight: bold;
+}
+
+.remove-item:hover {
+    color: #c82333;
+    transform: scale(1.1);
+}
+
+.order-total {
+    display: flex;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 1rem 0;
+    border-top: 2px solid #f0e5dc;
+}
+
+.checkout-btn {
+    width: 100%;
+    background: #4b672f;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 30px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.checkout-btn:hover {
+    background: #2c1810;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 1rem;
+    }
+    
+    .menu-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-sidebar {
+        position: static;
+    }
+}
+
+/* Manager Navigation Button */
+.manager-nav-btn {
+    display: inline-block;
+    background: #2c1810;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.manager-nav-btn:hover {
+    background: #4b672f;
+    transform: translateY(-2px);
+}
+
+/* Quantity buttons for order items */
+.quantity-btn {
+    background: #4b672f;
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.quantity-btn:hover {
+    background: #2c1810;
+    transform: scale(1.05);
+}
+
+.order-item-quantity {
+    font-weight: 600;
+    min-width: 30px;
+    text-align: center;
+    display: inline-block;
+    font-size: 14px;
+}
+
+/* Order History Navigation Button */
+.history-nav-btn {
+    display: inline-block;
+    background: #2c1810;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-right: 0.5rem;
+}
+
+.history-nav-btn:hover {
+    background: #4b672f;
+    transform: translateY(-2px);
+}
+
+.order-history-btn {
+    text-decoration: none;
+    width: 100%;
+    background: #2c1810;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 30px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 0.5rem;
+    font-weight:600;
+    
+}
+
+.order-history-btn:hover {
+    background: #4b672f;
+}
+
+/* Quantity buttons (+ and -) */
+.qty-btn {
+    background: #4b672f;
+    color: white;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.qty-btn:hover {
+    background: #2c1810;
+    transform: scale(1.05);
+}
+
+/* Quantity number display */
+.order-item-quantity {
+    font-weight: 600;
+    min-width: 30px;
+    text-align: center;
+    display: inline-block;
+    font-size: 14px;
+}
