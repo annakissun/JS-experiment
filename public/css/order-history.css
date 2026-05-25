@@ -15,7 +15,6 @@
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid #d8af81;
     flex-wrap: wrap;
     gap: 1rem;
 }
@@ -250,11 +249,9 @@
 }
 
 .modal-header {
-    display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1rem 1.5rem;
-    border-bottom: 2px solid #d8af81;
 }
 
 .modal-header h3 {

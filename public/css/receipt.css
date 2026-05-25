@@ -1,73 +1,91 @@
+/* ========================================
+   RECEIPT PRINT STYLES
+   ======================================== */
 
-        body {
-            font-family: 'Courier New', monospace;
-            background: #f0e5dc;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-        }
-        
-        .receipt {
-            background: white;
-            max-width: 300px;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .receipt-header {
-            text-align: center;
-            border-bottom: 1px dashed #ccc;
-            padding-bottom: 10px;
-            margin-bottom: 10px;
-        }
-        
-        .receipt-header h1 {
-            font-size: 18px;
-            margin: 0;
-        }
-        
-        .receipt-items {
-            margin: 10px 0;
-        }
-        
-        .receipt-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 5px 0;
-        }
-        
-        .receipt-total {
-            border-top: 1px dashed #ccc;
-            padding-top: 10px;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        
-        .receipt-footer {
-            text-align: center;
-            border-top: 1px dashed #ccc;
-            padding-top: 10px;
-            margin-top: 10px;
-            font-size: 12px;
-        }
-        
-        button {
-            background: #4b672f;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 20px;
-            width: 100%;
-        }
-        
-        @media print {
-            button { display: none; }
-            body { background: white; padding: 0; }
-            .receipt { box-shadow: none; padding: 0; }
-        }
+body {
+    font-family: 'Courier New', monospace;
+    background: #f0e5dc;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    padding: 20px;
+}
+
+.receipt {
+    background: white;
+    max-width: 300px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.receipt-header {
+    text-align: center;
+    border-bottom: 1px dashed #ccc;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+}
+
+.receipt-header h1 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.receipt-items {
+    margin: 10px 0;
+}
+
+.receipt-item {
+    display: flex;
+    justify-content: space-between;
+    margin: 5px 0;
+}
+
+.receipt-total {
+    border-top: 1px dashed #ccc;
+    padding-top: 10px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.receipt-footer {
+    text-align: center;
+    border-top: 1px dashed #ccc;
+    padding-top: 10px;
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+button {
+    background: #4b672f;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: 20px;
+    width: 100%;
+    font-family: inherit;
+}
+
+button:hover {
+    background: #2c1810;
+}
+
+@media print {
+    button {
+        display: none;
+    }
+
+    body {
+        background: white;
+        padding: 0;
+    }
+
+    .receipt {
+        box-shadow: none;
+        padding: 0;
+    }
+}

@@ -1,100 +1,226 @@
+/* ========================================
+   USER MANAGEMENT STYLES
+   ======================================== */
+
+/* Layout */
 .users-container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.1);
-            border-radius: 20px;
-            padding: 2rem;
-        }
-        .users-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        .user-card {
-            background: #d8af81;
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        .user-info {
-            flex: 2;
-        }
-        .user-name { font-weight: bold; font-size: 1.1rem; }
-        .user-role { color: #2c1810; font-size: 0.9rem; }
-        .user-actions button {
-            margin-left: 0.5rem;
-            padding: 0.4rem 0.8rem;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        .edit-user { background: #4b672f; color: white; }
-        .delete-user { background: #dc3545; color: white; }
-        .back-btn {
-            background: #2c1810;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 30px;
-            text-decoration: none;
-        }
-        .add-user-btn {
-            background: #4b672f;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 30px;
-            text-decoration: none;
-        }
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal.active { display: flex; }
-        .modal-content {
-            background: #fefaf5;
-            padding: 2rem;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 400px;
-        }
-        .modal-content input, .modal-content select {
-            width: 100%;
-            padding: 0.5rem;
-            margin: 0.5rem 0;
-            border: 1px solid #4b672f;
-            border-radius: 8px;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .save-btn { background: #4b672f; color: white; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; flex: 1; }
-        .cancel-btn { background: #6c757d; color: white; border: none; padding: 0.5rem; border-radius: 8px; cursor: pointer; flex: 1; }
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #4b672f;
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            animation: slideIn 0.3s ease;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+    max-width: 1200px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem;
+}
+
+/* Header */
+.users-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.users-header h1 {
+    color: #2c1810;
+    font-size: 2rem;
+    margin: 0;
+}
+
+/* Back Button */
+.back-btn {
+    background: #2c1810;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #4b672f;
+    transform: translateY(-2px);
+}
+
+/* User Card */
+.user-card {
+    background: #d8af81;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    transition: all 0.3s ease;
+}
+
+.user-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.user-info {
+    flex: 2;
+}
+
+.user-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #2c1810;
+}
+
+.user-role {
+    color: #2c1810;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Action Buttons */
+.user-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.user-actions button {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.edit-user {
+    background: #4b672f;
+    color: white;
+}
+
+.edit-user:hover {
+    background: #2c1810;
+    transform: scale(1.05);
+}
+
+.delete-user {
+    background: #dc3545;
+    color: white;
+}
+
+.delete-user:hover {
+    background: #c82333;
+    transform: scale(1.05);
+}
+
+/* Edit Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: #fefaf5;
+    padding: 2rem;
+    border-radius: 16px;
+    width: 90%;
+    max-width: 400px;
+}
+
+.modal-content h3 {
+    color: #2c1810;
+    margin-bottom: 1rem;
+    font-size: 1.3rem;
+}
+
+.modal-content input,
+.modal-content select {
+    width: 100%;
+    padding: 0.75rem;
+    margin: 0.5rem 0;
+    border: 2px solid #4b672f;
+    border-radius: 8px;
+    font-size: 1rem;
+    background: white;
+}
+
+.modal-content input:focus,
+.modal-content select:focus {
+    outline: none;
+    border-color: #2c1810;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.save-btn {
+    background: #4b672f;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    flex: 1;
+    font-weight: 600;
+}
+
+.save-btn:hover {
+    background: #2c1810;
+}
+
+.cancel-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    flex: 1;
+    font-weight: 600;
+}
+
+.cancel-btn:hover {
+    background: #5a6268;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .users-container {
+        padding: 1rem;
+    }
+
+    .users-header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .user-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .user-actions {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .user-actions button {
+        flex: 1;
+    }
+}

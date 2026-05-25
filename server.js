@@ -67,22 +67,34 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ============ MENU ROUTES ============
+// ============ MENU ROUTES ============
+
+// Get ONLY available items (for POS)
 app.get('/api/menu', (req, res) => {
-    db.query('SELECT * FROM menuitem', (err, results) => {
+    db.query('SELECT * FROM menuitem WHERE IsAvailable = 1', (err, results) => {
         err ? res.status(500).json({ error: err.message }) : res.json(results);
     });
 });
 
+// Get ALL items including disabled (for Manager)
+app.get('/api/menu/all', (req, res) => {
+    db.query('SELECT * FROM menuitem ORDER BY ItemID', (err, results) => {
+        err ? res.status(500).json({ error: err.message }) : res.json(results);
+    });
+});
+
+// Add new menu item
 app.post('/api/menu', (req, res) => {
     const { name, category, price } = req.body;
     if (!name || !price) return res.status(400).json({ error: 'Name and price required' });
     
-    db.query('INSERT INTO menuitem (ItemName, Category, Price) VALUES (?, ?, ?)',
+    db.query('INSERT INTO menuitem (ItemName, Category, Price, IsAvailable) VALUES (?, ?, ?, 1)',
         [name.toUpperCase(), category || 'hot', price],
         (err, result) => err ? res.status(500).json({ error: err.message }) : res.json({ success: true, ItemID: result.insertId })
     );
 });
 
+// Update menu item
 app.put('/api/menu/:id', (req, res) => {
     const { name, category, price } = req.body;
     db.query('UPDATE menuitem SET ItemName = ?, Category = ?, Price = ? WHERE ItemID = ?',
@@ -91,6 +103,21 @@ app.put('/api/menu/:id', (req, res) => {
     );
 });
 
+// Disable menu item
+app.put('/api/menu/:id/disable', (req, res) => {
+    db.query('UPDATE menuitem SET IsAvailable = 0 WHERE ItemID = ?', [req.params.id], (err) => {
+        err ? res.status(500).json({ error: err.message }) : res.json({ success: true });
+    });
+});
+
+// Enable menu item
+app.put('/api/menu/:id/enable', (req, res) => {
+    db.query('UPDATE menuitem SET IsAvailable = 1 WHERE ItemID = ?', [req.params.id], (err) => {
+        err ? res.status(500).json({ error: err.message }) : res.json({ success: true });
+    });
+});
+
+// Delete menu item
 app.delete('/api/menu/:id', (req, res) => {
     db.query('SELECT COUNT(*) as count FROM orderdetails WHERE ItemID = ?', [req.params.id], (err, result) => {
         if (err) return res.status(500).json({ error: err.message });

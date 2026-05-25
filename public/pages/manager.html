@@ -6,21 +6,18 @@
     <title>Manager Dashboard - Insaynitea</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/manager.css">
-
     <link rel="stylesheet" href="../css/modal.css">
     <script src="../js/modal.js"></script>
-
 </head>
 <body>
     <div class="manager-container">
         <div class="manager-header">
             <h1>☕ Manager Dashboard</h1>
-            <div style="display: flex; gap: 1rem;">
-                <a href="order-history.html" class="back-btn">Order History</a>
-                <a href="reports.html" class="order-history-btn">Sales Reports</a>
-                <a href="users.html" class="order-history-btn">Manage Users</a>
-                <a href="#" onclick="confirmLogout(() => window.location.href='../index.html')" class="back-btn">← Logout</a>
-                
+            <div class="button-group">
+                <a href="order-history.html" class="nav-btn">Order History</a>
+                <a href="users.html" class="nav-btn">Manage Users</a>
+                <a href="dashboard.html" class="nav-btn">Dashboard Analytics</a>
+                <a href="#" onclick="confirmLogout(() => window.location.href='../index.html')" class="nav-btn logout-btn">← Logout</a>
             </div>
         </div>
 
@@ -32,7 +29,7 @@
                 <option value="iced">❄️ Iced</option>
             </select>
             <input type="number" id="item-price" placeholder="Price (RM)" step="0.01">
-            <button class="add-order-btn" id="add-btn" style="width: 100%;">+ Add Item</button>
+            <button class="add-btn" id="add-btn">+ Add Item</button>
         </div>
 
         <div class="manager-form">

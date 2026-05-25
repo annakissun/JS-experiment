@@ -1,40 +1,89 @@
-/* Manager Dashboard Styles - For manager.html */
+/* ========================================
+   MANAGER DASHBOARD STYLES
+   ======================================== */
 
+/* Layout */
 .manager-container {
     max-width: 1200px;
     margin: 0 auto;
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     border-radius: 20px;
     padding: 2rem;
 }
 
+/* Header */
 .manager-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 2rem;
     padding-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
 }
 
 .manager-header h1 {
     color: #2c1810;
     font-size: 2rem;
+    margin: 0;
 }
 
-.back-btn {
+/* Button Group */
+.button-group {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Navigation Buttons - ALL buttons use same class */
+.button-group {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.nav-btn {
     background: #2c1810;
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 30px;
     text-decoration: none;
-    transition: all 0.3s ease;
     font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
 }
 
-.back-btn:hover {
+.nav-btn:hover {
     background: #4b672f;
     transform: translateY(-2px);
 }
+
+/* Add button in form */
+.add-btn {
+    background: #4b672f;
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+.add-btn:hover {
+    background: #2c1810;
+    transform: translateY(-2px);
+}
+
+/* Logout button can be same or different color */
+.logout-btn {
+    background: #2c1810;
+}
+
 
 /* Form Sections */
 .manager-form {
@@ -95,6 +144,7 @@
     overflow-y: auto;
 }
 
+/* Menu Item Card */
 .menu-item-card {
     background: #fefaf5;
     padding: 1rem;
@@ -108,7 +158,7 @@
 
 .menu-item-card:hover {
     transform: translateX(5px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .menu-item-info {
@@ -132,12 +182,14 @@
     color: #4b672f;
 }
 
+/* Action Buttons */
 .menu-item-actions {
     display: flex;
     gap: 0.5rem;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn,
+.delete-btn {
     padding: 0.4rem 0.8rem;
     border: none;
     border-radius: 6px;
@@ -167,7 +219,7 @@
     transform: scale(1.05);
 }
 
-/* Loading and Empty States */
+/* States */
 .loading {
     text-align: center;
     padding: 2rem;
@@ -182,51 +234,7 @@
     border-radius: 12px;
 }
 
-/* Toast Notifications */
-.toast {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    padding: 1rem 1.5rem;
-    border-radius: 8px;
-    color: white;
-    font-weight: 500;
-    z-index: 1000;
-    animation: slideIn 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-}
-
-.toast.success {
-    background: #4b672f;
-}
-
-.toast.error {
-    background: #dc3545;
-}
-
-@keyframes slideIn {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
-}
-
-@keyframes slideOut {
-    from {
-        transform: translateX(0);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-}
-
-/* Scrollbar Styling */
+/* Scrollbar */
 .menu-items-list::-webkit-scrollbar {
     width: 8px;
 }
@@ -245,30 +253,88 @@
     background: #2c1810;
 }
 
+/* Disabled menu item styling */
+.disabled-item {
+    opacity: 0.7;
+    background: #e0d6cc;
+}
+
+.disabled-item .menu-item-name {
+    text-decoration: line-through;
+}
+
+.badge-disabled {
+    background: #dc3545;
+    color: white;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    margin-left: 0.5rem;
+    display: inline-block;
+}
+
+/* Disable button */
+.disable-btn {
+    background: #dc3545;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.disable-btn:hover {
+    background: #c82333;
+    transform: scale(1.05);
+}
+
+/* Enable button */
+.enable-btn {
+    background: #28a745;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.enable-btn:hover {
+    background: #218838;
+    transform: scale(1.05);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .manager-container {
         padding: 1rem;
     }
-    
+
     .manager-header {
         flex-direction: column;
-        gap: 1rem;
         text-align: center;
     }
-    
+
+    .button-group {
+        justify-content: center;
+    }
+
     .menu-item-card {
         flex-direction: column;
         text-align: center;
         gap: 1rem;
     }
-    
+
     .menu-item-actions {
         justify-content: center;
         width: 100%;
     }
-    
-    .edit-btn, .delete-btn {
+
+    .edit-btn,
+    .delete-btn {
         flex: 1;
     }
 }

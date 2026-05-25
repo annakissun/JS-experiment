@@ -6,10 +6,8 @@
     <title>Order History - Insaynitea</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/order-history.css">
-
     <link rel="stylesheet" href="../css/modal.css">
     <script src="../js/modal.js"></script>
-
 </head>
 <body>
     <div class="history-container">
@@ -43,32 +41,20 @@
         </div>
     </div>
 
+    <!-- Order Details Modal - Keep for viewing order items -->
     <div id="order-modal" class="modal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3>Order Details</h3>
+                <h3>📋 Order Details</h3>
                 <button onclick="closeOrderModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
             </div>
             <div id="order-details-content"></div>
         </div>
     </div>
 
-    <div id="delete-modal" class="modal">
-        <div class="modal-content delete-modal">
-            <h3>⚠️ Delete Order</h3>
-            <p>Are you sure you want to delete this order?</p>
-            <p class="warning">This action cannot be undone!</p>
-            <div class="modal-buttons">
-                <button onclick="confirmDeleteOrder()" class="delete-confirm-btn">Yes, Delete Order</button>
-                <button onclick="closeDeleteModal()" class="cancel-btn">Cancel</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         const API_URL = `${window.location.protocol}//${window.location.hostname}:3000/api`;
         let allOrders = [];
-        let orderToDelete = null;
 
         // Smart back button
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
@@ -148,7 +134,7 @@
                 printWindow.document.close();
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to reprint receipt');
+                showError('Failed to reprint receipt');
             }
         }
 
@@ -197,7 +183,7 @@
                     <div class="order-actions">
                         <button class="view-details-btn" onclick="viewOrderDetails(${order.OrderID})">👁️ View</button>
                         <button class="print-receipt-btn" onclick="reprintReceipt(${order.OrderID})">🧾 Reprint</button>
-                        <button class="delete-order-btn" onclick="showDeleteConfirm(${order.OrderID})">🗑️ Delete</button>
+                        <button class="delete-order-btn" onclick="deleteOrder(${order.OrderID})">🗑️ Delete</button>
                     </div>
                 </div>
             `).join('');
@@ -208,65 +194,65 @@
                 const response = await fetch(`${API_URL}/orders/${orderId}`);
                 const data = await response.json();
                 document.getElementById('order-details-content').innerHTML = `
-                    <p><strong>Order ID:</strong> #${data.order.OrderID}</p>
-                    <p><strong>Date:</strong> ${new Date(data.order.OrderDate).toLocaleString()}</p>
-                    <p><strong>Total:</strong> RM${parseFloat(data.order.TotalAmount).toFixed(2)}</p>
-                    <hr>
-                    <h4>Items:</h4>
-                    ${data.items.map(item => `
-                        <div style="display: flex; justify-content: space-between; padding: 5px 0;">
-                            <span>${item.ItemName}</span>
-                            <span>${item.Quantity} x RM${(item.Subtotal / item.Quantity).toFixed(2)} = RM${parseFloat(item.Subtotal).toFixed(2)}</span>
-                        </div>
-                    `).join('')}
+                    <div style="padding: 1rem;">
+                        <p><strong>Order ID:</strong> #${data.order.OrderID}</p>
+                        <p><strong>Date:</strong> ${new Date(data.order.OrderDate).toLocaleString()}</p>
+                        <p><strong>Total:</strong> RM${parseFloat(data.order.TotalAmount).toFixed(2)}</p>
+                        <hr>
+                        <h4>Items:</h4>
+                        ${data.items.map(item => `
+                            <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                                <span>${item.ItemName}</span>
+                                <span>${item.Quantity} x RM${(item.Subtotal / item.Quantity).toFixed(2)} = RM${parseFloat(item.Subtotal).toFixed(2)}</span>
+                            </div>
+                        `).join('')}
+                    </div>
                 `;
                 document.getElementById('order-modal').style.display = 'flex';
             } catch (error) {
-                alert('Failed to load order details');
+                showError('Failed to load order details');
             }
         }
 
-        function showDeleteConfirm(orderId) {
-            orderToDelete = orderId;
-            document.getElementById('delete-modal').style.display = 'flex';
-        }
-
-        async function confirmDeleteOrder() {
-            if (!orderToDelete) return;
-            try {
-                const response = await fetch(`${API_URL}/orders/${orderToDelete}`, { method: 'DELETE' });
-                if (response.ok) {
-                    alert(`Order #${orderToDelete} deleted`);
-                    loadOrders();
-                } else {
-                    alert('Failed to delete');
+        // ============ DELETE ORDER WITH MODAL ============
+        async function deleteOrder(orderId) {
+            showModal({
+                icon: '🗑️',
+                title: 'Delete Order',
+                message: `Are you sure you want to delete Order #${orderId}? This action cannot be undone.`,
+                confirmText: 'Yes, Delete Order',
+                cancelText: 'Cancel',
+                type: 'danger',
+                onConfirm: async () => {
+                    try {
+                        const response = await fetch(`${API_URL}/orders/${orderId}`, { method: 'DELETE' });
+                        
+                        if (response.ok) {
+                            showModal({
+                                icon: '✅',
+                                title: 'Order Deleted',
+                                message: `Order #${orderId} has been deleted successfully!`,
+                                confirmText: 'OK',
+                                hideCancel: true,
+                                type: 'success',
+                                onConfirm: () => loadOrders()
+                            });
+                        } else {
+                            const error = await response.json();
+                            showError(error.error || 'Failed to delete order');
+                        }
+                    } catch (error) {
+                        showError('Server error. Please try again.');
+                    }
                 }
-            } catch (error) {
-                alert('Server error');
-            }
-            closeDeleteModal();
+            });
         }
 
         function refreshOrders() { loadOrders(); }
         function closeOrderModal() { document.getElementById('order-modal').style.display = 'none'; }
-        function closeDeleteModal() { 
-            document.getElementById('delete-modal').style.display = 'none';
-            orderToDelete = null;
-        }
 
         document.getElementById('search-order').addEventListener('input', filterAndDisplay);
         loadOrders();
-
-        function deleteOrder(orderId, orderName) {
-            confirmDelete(`Order #${orderId}`, async () => {
-                const response = await fetch(`${API_URL}/orders/${orderId}`, { method: 'DELETE' });
-                if (response.ok) {
-                    showSuccess(`Order #${orderId} deleted successfully!`, () => loadOrders());
-                } else {
-                    showError('Failed to delete order');
-                }
-            });
-        }
     </script>
 </body>
 </html>
