@@ -6,10 +6,8 @@
     <title>Manage Users - Insaynitea</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/users.css">
-
     <link rel="stylesheet" href="../css/modal.css">
     <script src="../js/modal.js"></script>
-    
 </head>
 <body>
     <div class="users-container">
@@ -37,7 +35,7 @@
             <input type="password" id="edit-password" placeholder="New password (leave blank to keep current)">
             <div class="modal-buttons">
                 <button onclick="saveUser()" class="save-btn">Save</button>
-                <button onclick="closeModal()" class="cancel-btn">Cancel</button>
+                <button onclick="closeEditModal()" class="cancel-btn">Cancel</button>
             </div>
         </div>
     </div>
@@ -45,15 +43,6 @@
     <script>
         const API_URL = `${window.location.protocol}//${window.location.hostname}:3000/api`;
         let currentUserId = null;
-
-        function showToast(message, isError = false) {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.textContent = message;
-            if (isError) toast.style.background = '#dc3545';
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
-        }
 
         async function loadUsers() {
             try {
@@ -79,7 +68,7 @@
                     </div>
                 `).join('');
             } catch (error) {
-                showToast('Failed to load users', true);
+                showError('Failed to load users');
             }
         }
 
@@ -88,21 +77,64 @@
             document.getElementById('edit-name').value = name;
             document.getElementById('edit-role').value = role;
             document.getElementById('edit-password').value = '';
-            document.getElementById('edit-modal').classList.add('active');
+            document.getElementById('edit-modal').style.display = 'flex';
         }
 
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+            currentUserId = null;
+        }
+
+        // DELETE USER with modal confirmation
+        function deleteUser(id, userName) {
+            showModal({
+                icon: '👤',
+                title: 'Delete User',
+                message: `Are you sure you want to delete "${userName}"? This action cannot be undone.`,
+                confirmText: 'Yes, Delete',
+                cancelText: 'Cancel',
+                type: 'danger',
+                onConfirm: async () => {
+                    try {
+                        const response = await fetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
+                        if (response.ok) {
+                            showModal({
+                                icon: '✅',
+                                title: 'User Deleted',
+                                message: `"${userName}" has been deleted successfully!`,
+                                confirmText: 'OK',
+                                hideCancel: true,
+                                type: 'success',
+                                onConfirm: () => loadUsers()
+                            });
+                        } else {
+                            showError('Failed to delete user');
+                        }
+                    } catch (error) {
+                        showError('Server error');
+                    }
+                }
+            });
+        }
+
+        // SAVE USER with modal confirmation
         async function saveUser() {
             const name = document.getElementById('edit-name').value;
             const role = document.getElementById('edit-role').value;
             const password = document.getElementById('edit-password').value;
             
             if (!name) {
-                showToast('Name is required', true);
+                showError('Name is required');
                 return;
             }
             
             const body = { name, role };
             if (password) body.password = password;
+            
+            const saveBtn = document.querySelector('#edit-modal .save-btn');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saving...';
+            saveBtn.disabled = true;
             
             try {
                 const response = await fetch(`${API_URL}/users/${currentUserId}`, {
@@ -112,38 +144,29 @@
                 });
                 
                 if (response.ok) {
-                    showToast('User updated successfully');
-                    closeModal();
-                    loadUsers();
+                    closeEditModal();
+                    showModal({
+                        icon: '✏️',
+                        title: 'User Updated',
+                        message: `"${name}" has been updated successfully!`,
+                        confirmText: 'OK',
+                        hideCancel: true,
+                        type: 'success',
+                        onConfirm: () => loadUsers()
+                    });
                 } else {
-                    showToast('Failed to update user', true);
+                    showError('Failed to update user');
+                    saveBtn.textContent = originalText;
+                    saveBtn.disabled = false;
                 }
             } catch (error) {
-                showToast('Server error', true);
+                showError('Server error');
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
             }
         }
 
-        async function deleteUser(id, name) {
-            if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
-            
-            try {
-                const response = await fetch(`${API_URL}/users/${id}`, { method: 'DELETE' });
-                if (response.ok) {
-                    showToast(`User ${name} deleted`);
-                    loadUsers();
-                } else {
-                    showToast('Failed to delete user', true);
-                }
-            } catch (error) {
-                showToast('Server error', true);
-            }
-        }
-
-        function closeModal() {
-            document.getElementById('edit-modal').classList.remove('active');
-            currentUserId = null;
-        }
-
+        // Load users on page load
         loadUsers();
     </script>
 </body>

@@ -226,6 +226,20 @@ async function checkout() {
         }else {
             alert('Error: ' + (result.error || 'Could not save order'));
         }
+
+        if (result.success) {
+            const receiptItems = order.map(item => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price
+            }));
+            
+            notifyCheckoutSuccess(result.orderId, total, () => {
+                printReceipt(result.orderId, receiptItems, total);
+                order = [];
+                updateOrderDisplay();
+            });
+        }
     } catch (error) {
         console.error('Checkout error:', error);
         alert('Server error. Make sure server is running on port 3000');

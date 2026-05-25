@@ -4,28 +4,14 @@ const API_URL = `${window.location.protocol}//${window.location.hostname}:3000/a
 const urlParams = new URLSearchParams(window.location.search);
 const itemId = urlParams.get('id');
 
-console.log('Edit page loaded. Item ID:', itemId); // Debug log
-
-// Show toast notification
-function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
-}
+console.log('Edit page loaded. Item ID:', itemId);
 
 // Load item details
 async function loadItem() {
-    console.log('Loading item...'); // Debug log
+    console.log('Loading item...');
     
     if (!itemId) {
-        console.error('No item ID found in URL');
-        showToast('No item ID specified', 'error');
+        showError('No item ID specified');
         setTimeout(() => {
             window.location.href = 'manager.html';
         }, 2000);
@@ -33,7 +19,7 @@ async function loadItem() {
     }
     
     try {
-        console.log('Fetching menu from:', `${API_URL}/menu`); // Debug log
+        console.log('Fetching menu from:', `${API_URL}/menu`);
         const response = await fetch(`${API_URL}/menu`);
         
         if (!response.ok) {
@@ -41,14 +27,13 @@ async function loadItem() {
         }
         
         const items = await response.json();
-        console.log('Loaded items:', items); // Debug log
+        console.log('Loaded items:', items);
         
         const item = items.find(i => i.ItemID == itemId);
-        console.log('Found item:', item); // Debug log
+        console.log('Found item:', item);
         
         if (!item) {
-            console.error('Item not found with ID:', itemId);
-            showToast('Item not found', 'error');
+            showError('Item not found');
             setTimeout(() => {
                 window.location.href = 'manager.html';
             }, 2000);
@@ -65,11 +50,11 @@ async function loadItem() {
         document.getElementById('loading-message').style.display = 'none';
         document.getElementById('edit-form').style.display = 'block';
         
-        console.log('Form populated and displayed'); // Debug log
+        console.log('Form populated and displayed');
         
     } catch (error) {
         console.error('Error loading item:', error);
-        showToast('Failed to load item details: ' + error.message, 'error');
+        showError('Failed to load item details: ' + error.message);
         setTimeout(() => {
             window.location.href = 'manager.html';
         }, 3000);
@@ -85,7 +70,7 @@ document.getElementById('edit-form').addEventListener('submit', async (e) => {
     const price = parseFloat(document.getElementById('edit-price').value);
     
     if (!name || isNaN(price)) {
-        showToast('Please fill in all fields correctly', 'error');
+        showError('Please fill in all fields correctly');
         return;
     }
     
@@ -102,19 +87,27 @@ document.getElementById('edit-form').addEventListener('submit', async (e) => {
         });
         
         if (response.ok) {
-            showToast(`✅ "${name}" updated successfully!`, 'success');
-            setTimeout(() => {
-                window.location.href = 'manager.html';
-            }, 1500);
+            // Use the modal success popup
+            showModal({
+                icon: '✏️',
+                title: 'Item Updated',
+                message: `"${name}" has been updated successfully!`,
+                confirmText: 'OK',
+                hideCancel: true,
+                type: 'success',
+                onConfirm: () => {
+                    window.location.href = 'manager.html';
+                }
+            });
         } else {
             const error = await response.json();
-            showToast(error.error || 'Failed to update item', 'error');
+            showError(error.error || 'Failed to update item');
             saveBtn.textContent = originalText;
             saveBtn.disabled = false;
         }
     } catch (error) {
         console.error('Save error:', error);
-        showToast('Server error. Please try again.', 'error');
+        showError('Server error. Please try again.');
         saveBtn.textContent = originalText;
         saveBtn.disabled = false;
     }

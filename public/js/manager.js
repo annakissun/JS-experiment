@@ -54,7 +54,7 @@ document.getElementById('add-btn').onclick = async () => {
         });
         
         if (response.ok) {
-            alert(`"${name}" added!`);
+            notifyAddSuccess(name);
             document.getElementById('item-name').value = '';
             document.getElementById('item-price').value = '';
             loadItems();
@@ -88,7 +88,7 @@ window.editItem = async (id) => {
         });
         
         if (response.ok) {
-            alert('Item updated!');
+            notifyEditSuccess(name);
             loadItems();
         } else {
             alert('Failed to update');
@@ -99,25 +99,22 @@ window.editItem = async (id) => {
 };
 
 // Delete item
-window.deleteItem = async (id) => {
-    if (!confirm('Delete this item?')) return;
-    
-    try {
-        const response = await fetch(`${API_URL}/menu/${id}`, {
-            method: 'DELETE'
-        });
-        
-        if (response.ok) {
-            alert('Item deleted!');
-            loadItems();
-        } else {
-            const error = await response.json();
-            alert(error.error || 'Failed to delete');
+function deleteItem(id, itemName) {
+    confirmDeleteMenuItem(itemName, async () => {
+        try {
+            const response = await fetch(`${API_URL}/menu/${id}`, { method: 'DELETE' });
+            if (response.ok) {
+                showSuccess(`"${itemName}" deleted from menu!`, () => loadItems());
+            } else {
+                const error = await response.json();
+                showError(error.error || 'Failed to delete item');
+            }
+        } catch (error) {
+            showError('Server error. Please try again.');
         }
-    } catch (error) {
-        alert('Server error');
-    }
-};
+    });
+}
+
 
 // Search functionality
 document.getElementById('search').addEventListener('input', loadItems);

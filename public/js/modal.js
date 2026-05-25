@@ -35,19 +35,28 @@ function showModal(options) {
     const icon = document.getElementById('modal-icon');
     const title = document.getElementById('modal-title');
     const message = document.getElementById('modal-message');
-    const confirmBtn = document.getElementById('modal-confirm');
-    const cancelBtn = document.getElementById('modal-cancel');
+    let confirmBtn = document.getElementById('modal-confirm');
+    let cancelBtn = document.getElementById('modal-cancel');
     
     // Set content
     icon.innerHTML = options.icon || '❓';
     title.textContent = options.title || 'Confirm Action';
     message.textContent = options.message || 'Are you sure?';
     confirmBtn.textContent = options.confirmText || 'OK';
-    cancelBtn.textContent = options.cancelText || 'Cancel';
+    
+    // Handle cancel button visibility
+    if (options.cancelText === '' || options.hideCancel) {
+        cancelBtn.style.display = 'none';
+    } else {
+        cancelBtn.style.display = 'block';
+        cancelBtn.textContent = options.cancelText || 'Cancel';
+    }
     
     // Set button styles
     if (options.type === 'danger') {
         confirmBtn.className = 'modal-btn modal-btn-danger';
+    } else if (options.type === 'success') {
+        confirmBtn.className = 'modal-btn modal-btn-confirm';
     } else {
         confirmBtn.className = 'modal-btn modal-btn-confirm';
     }
@@ -64,10 +73,12 @@ function showModal(options) {
         if (options.onConfirm) options.onConfirm();
     };
     
-    newCancelBtn.onclick = () => {
-        closeModal();
-        if (options.onCancel) options.onCancel();
-    };
+    if (!options.hideCancel) {
+        newCancelBtn.onclick = () => {
+            closeModal();
+            if (options.onCancel) options.onCancel();
+        };
+    }
     
     // Close on overlay click
     modal.onclick = (e) => {
@@ -89,75 +100,159 @@ function closeModal() {
     }
 }
 
-// Quick preset functions
-function confirmLogout(callback) {
+// ============ CRUD CONFIRMATION FUNCTIONS ============
+
+// 1. LOGOUT
+function confirmLogout() {
+    const isInSubfolder = window.location.pathname.includes('/pages/');
+    const logoutPath = isInSubfolder ? '../index.html' : 'index.html';
+    
     showModal({
         icon: '🚪',
         title: 'Logout Confirmation',
         message: 'Are you sure you want to logout?',
         confirmText: 'Yes, Logout',
         cancelText: 'Cancel',
-        onConfirm: callback,
-        onCancel: () => {}
+        onConfirm: () => {
+            sessionStorage.clear();
+            window.location.href = logoutPath;
+        }
     });
 }
 
-function confirmDelete(itemName, callback) {
+// 2. DELETE MENU ITEM
+function confirmDeleteMenuItem(itemName, onConfirm) {
     showModal({
         icon: '🗑️',
-        title: 'Delete Confirmation',
-        message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
+        title: 'Delete Menu Item',
+        message: `Are you sure you want to delete "${itemName}" from the menu? This action cannot be undone.`,
         confirmText: 'Yes, Delete',
         cancelText: 'Cancel',
         type: 'danger',
-        onConfirm: callback
+        onConfirm: onConfirm
     });
 }
 
-function showSuccess(message, callback) {
+// 3. EDIT MENU ITEM (just notification, no confirmation needed usually)
+function notifyEditSuccess(itemName) {
+    showModal({
+        icon: '✏️',
+        title: 'Item Updated',
+        message: `"${itemName}" has been updated successfully!`,
+        confirmText: 'OK',
+        hideCancel: true,
+        type: 'success'
+    });
+}
+
+// 4. ADD MENU ITEM SUCCESS
+function notifyAddSuccess(itemName) {
+    showModal({
+        icon: '✅',
+        title: 'Item Added',
+        message: `"${itemName}" has been added to the menu!`,
+        confirmText: 'OK',
+        hideCancel: true,
+        type: 'success'
+    });
+}
+
+// 5. DELETE USER
+function confirmDeleteUser(userName, onConfirm) {
+    showModal({
+        icon: '👤',
+        title: 'Delete User',
+        message: `Are you sure you want to delete "${userName}"? This action cannot be undone.`,
+        confirmText: 'Yes, Delete',
+        cancelText: 'Cancel',
+        type: 'danger',
+        onConfirm: onConfirm
+    });
+}
+
+// 6. EDIT USER SUCCESS
+function notifyEditUserSuccess(userName) {
+    showModal({
+        icon: '✏️',
+        title: 'User Updated',
+        message: `"${userName}" has been updated successfully!`,
+        confirmText: 'OK',
+        hideCancel: true,
+        type: 'success'
+    });
+}
+
+// 7. ADD USER SUCCESS
+function notifyAddUserSuccess(userName) {
+    showModal({
+        icon: '✅',
+        title: 'User Added',
+        message: `"${userName}" has been registered successfully!`,
+        confirmText: 'OK',
+        hideCancel: true,
+        type: 'success'
+    });
+}
+
+// 8. DELETE ORDER
+function confirmDeleteOrder(orderId, onConfirm) {
+    showModal({
+        icon: '🧾',
+        title: 'Delete Order',
+        message: `Are you sure you want to delete Order #${orderId}? This action cannot be undone.`,
+        confirmText: 'Yes, Delete',
+        cancelText: 'Cancel',
+        type: 'danger',
+        onConfirm: onConfirm
+    });
+}
+
+// 9. CHECKOUT SUCCESS
+function notifyCheckoutSuccess(orderId, total, onConfirm) {
+    showModal({
+        icon: '🧾',
+        title: 'Order Completed!',
+        message: `Order #${orderId} completed!\nTotal: RM${total.toFixed(2)}`,
+        confirmText: 'Print Receipt',
+        cancelText: 'Close',
+        onConfirm: onConfirm
+    });
+}
+
+// 10. GENERIC SUCCESS
+function showSuccess(message, onConfirm) {
     showModal({
         icon: '✅',
         title: 'Success!',
         message: message,
         confirmText: 'OK',
-        cancelText: '',
+        hideCancel: true,
         type: 'success',
-        onConfirm: callback
+        onConfirm: onConfirm
     });
-    // Hide cancel button for success messages
-    setTimeout(() => {
-        const cancelBtn = document.getElementById('modal-cancel');
-        if (cancelBtn) cancelBtn.style.display = 'none';
-    }, 50);
 }
 
+// 11. GENERIC ERROR
 function showError(message) {
     showModal({
         icon: '❌',
         title: 'Error',
         message: message,
         confirmText: 'OK',
-        cancelText: '',
-        type: 'danger',
-        onConfirm: () => {}
+        hideCancel: true,
+        type: 'danger'
     });
-    setTimeout(() => {
-        const cancelBtn = document.getElementById('modal-cancel');
-        if (cancelBtn) cancelBtn.style.display = 'none';
-    }, 50);
 }
 
-function showInfo(title, message, callback) {
+// 12. GENERIC CONFIRMATION
+function showConfirmation(title, message, onConfirm, onCancel) {
     showModal({
-        icon: 'ℹ️',
+        icon: '⚠️',
         title: title,
         message: message,
-        confirmText: 'OK',
-        cancelText: '',
-        onConfirm: callback
+        confirmText: 'Yes',
+        cancelText: 'No',
+        onConfirm: onConfirm,
+        onCancel: onCancel
     });
-    setTimeout(() => {
-        const cancelBtn = document.getElementById('modal-cancel');
-        if (cancelBtn) cancelBtn.style.display = 'none';
-    }, 50);
 }
