@@ -6,7 +6,6 @@
     <title>Order History - Insaynitea</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/order-history.css">
-   
 </head>
 <body>
     <div class="history-container">
@@ -14,11 +13,10 @@
             <h1>📋 Order History</h1>
             <div>
                 <button onclick="refreshOrders()" class="refresh-btn">🔄 Refresh</button>
-                <a href="#" id="back-button" class="back-btn">← Loading...</a>
+                <a href="#" id="back-button" class="back-btn">← Back</a>
             </div>
         </div>
         
-        <!-- Rest of your order history content -->
         <div class="filters-section">
             <div class="search-box">
                 <input type="text" id="search-order" placeholder="🔍 Search by Order ID...">
@@ -45,20 +43,32 @@
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <h3>Order Details</h3>
-                <button onclick="closeModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
+                <button onclick="closeOrderModal()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
             </div>
             <div id="order-details-content"></div>
         </div>
     </div>
 
+    <div id="delete-modal" class="modal">
+        <div class="modal-content delete-modal">
+            <h3>⚠️ Delete Order</h3>
+            <p>Are you sure you want to delete this order?</p>
+            <p class="warning">This action cannot be undone!</p>
+            <div class="modal-buttons">
+                <button onclick="confirmDeleteOrder()" class="delete-confirm-btn">Yes, Delete Order</button>
+                <button onclick="closeDeleteModal()" class="cancel-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = `${window.location.protocol}//${window.location.hostname}:3000/api`;
-        let currentOrders = [];
+        let allOrders = [];
+        let orderToDelete = null;
 
-        // Smart back button based on user role
+        // Smart back button
         const user = JSON.parse(sessionStorage.getItem('user') || '{}');
         const backButton = document.getElementById('back-button');
-        
         if (user.Role === 'manager') {
             backButton.href = 'manager.html';
             backButton.textContent = '← Back to Manager Dashboard';
@@ -67,34 +77,94 @@
             backButton.textContent = '← Back to POS';
         }
 
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            setTimeout(() => toast.remove(), 3000);
+        // ============ REPRINT RECEIPT ============
+        async function reprintReceipt(orderId) {
+            try {
+                const response = await fetch(`${API_URL}/orders/${orderId}`);
+                const data = await response.json();
+                
+                const items = data.items.map(item => ({
+                    name: item.ItemName,
+                    quantity: item.Quantity,
+                    price: parseFloat(item.Subtotal) / item.Quantity
+                }));
+                
+                const total = parseFloat(data.order.TotalAmount);
+                const maxNameLen = Math.max(...items.map(i => i.name.length), 10);
+                
+                let receiptLines = [];
+                receiptLines.push('================================');
+                receiptLines.push('      ☕ INSAYNITEA COFFEE ☕');
+                receiptLines.push('================================');
+                receiptLines.push(`Order #: ${orderId}`);
+                receiptLines.push(`Date: ${new Date(data.order.OrderDate).toLocaleString()}`);
+                receiptLines.push('================================');
+                receiptLines.push('');
+                receiptLines.push('ITEMS:');
+                
+                items.forEach(item => {
+                    const name = item.name.padEnd(maxNameLen);
+                    const qty = `${item.quantity} x RM${item.price.toFixed(2)}`;
+                    receiptLines.push(` ${name}  ${qty}`);
+                });
+                
+                receiptLines.push('');
+                receiptLines.push('================================');
+                receiptLines.push(`TOTAL: RM${total.toFixed(2)}`);
+                receiptLines.push('================================');
+                receiptLines.push('');
+                receiptLines.push('Thank you for your order!');
+                receiptLines.push('☕ Have a great day! ☕');
+                receiptLines.push('================================');
+                
+                const printWindow = window.open('', '_blank', 'width=400,height=600');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Receipt #${orderId}</title>
+                        <style>
+                            body { font-family: monospace; padding: 20px; margin: 0; display: flex; justify-content: center; }
+                            .receipt { max-width: 350px; width: 100%; }
+                            pre { font-size: 13px; font-family: monospace; margin: 0; white-space: pre-wrap; }
+                            button { margin-top: 20px; padding: 10px; width: 100%; background: #4b672f; color: white; border: none; border-radius: 5px; cursor: pointer; }
+                            @media print { button { display: none; } }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="receipt">
+                            <pre>${receiptLines.join('\n')}</pre>
+                            <button onclick="window.print()">🖨️ Print Receipt</button>
+                            <button onclick="window.close()">✕ Close</button>
+                        </div>
+                        <script>setTimeout(() => window.print(), 500);<\/script>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to reprint receipt');
+            }
         }
 
+        // ============ LOAD ORDERS ============
         async function loadOrders() {
             try {
                 const response = await fetch(`${API_URL}/orders`);
-                currentOrders = await response.json();
+                allOrders = await response.json();
                 filterAndDisplay();
             } catch (error) {
-                document.getElementById('orders-list').innerHTML = '<div class="loading">Failed to load orders</div>';
+                document.getElementById('orders-list').innerHTML = '<div class="loading">❌ Failed to load orders</div>';
             }
         }
 
         function filterAndDisplay() {
             const searchTerm = document.getElementById('search-order').value.toLowerCase();
-            let filtered = currentOrders;
-            
+            let filtered = allOrders;
             if (searchTerm) {
-                filtered = currentOrders.filter(order => 
-                    order.OrderID.toString().includes(searchTerm)
-                );
+                filtered = allOrders.filter(order => order.OrderID.toString().includes(searchTerm));
             }
-            
             updateStats(filtered);
             displayOrders(filtered);
         }
@@ -107,9 +177,8 @@
 
         function displayOrders(orders) {
             const container = document.getElementById('orders-list');
-            
             if (orders.length === 0) {
-                container.innerHTML = '<div class="loading">No orders found</div>';
+                container.innerHTML = '<div class="empty-state">📭 No orders found</div>';
                 return;
             }
             
@@ -121,9 +190,10 @@
                         <div>${order.ItemCount || 0} item(s)</div>
                     </div>
                     <div class="order-total">RM${parseFloat(order.TotalAmount).toFixed(2)}</div>
-                    <div>
-                        <button class="view-details-btn" onclick="viewOrderDetails(${order.OrderID})">📋 View</button>
-                        <button class="delete-order-btn" onclick="deleteOrder(${order.OrderID})">🗑️ Delete</button>
+                    <div class="order-actions">
+                        <button class="view-details-btn" onclick="viewOrderDetails(${order.OrderID})">👁️ View</button>
+                        <button class="print-receipt-btn" onclick="reprintReceipt(${order.OrderID})">🧾 Reprint</button>
+                        <button class="delete-order-btn" onclick="showDeleteConfirm(${order.OrderID})">🗑️ Delete</button>
                     </div>
                 </div>
             `).join('');
@@ -133,62 +203,54 @@
             try {
                 const response = await fetch(`${API_URL}/orders/${orderId}`);
                 const data = await response.json();
-                
-                const detailsHtml = `
+                document.getElementById('order-details-content').innerHTML = `
                     <p><strong>Order ID:</strong> #${data.order.OrderID}</p>
                     <p><strong>Date:</strong> ${new Date(data.order.OrderDate).toLocaleString()}</p>
                     <p><strong>Total:</strong> RM${parseFloat(data.order.TotalAmount).toFixed(2)}</p>
                     <hr>
                     <h4>Items:</h4>
                     ${data.items.map(item => `
-                        <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #ddd;">
+                        <div style="display: flex; justify-content: space-between; padding: 5px 0;">
                             <span>${item.ItemName}</span>
                             <span>${item.Quantity} x RM${(item.Subtotal / item.Quantity).toFixed(2)} = RM${parseFloat(item.Subtotal).toFixed(2)}</span>
                         </div>
                     `).join('')}
                 `;
-                
-                document.getElementById('order-details-content').innerHTML = detailsHtml;
-                document.getElementById('order-modal').classList.add('active');
+                document.getElementById('order-modal').style.display = 'flex';
             } catch (error) {
-                showToast('Failed to load order details', 'error');
+                alert('Failed to load order details');
             }
         }
 
-        async function deleteOrder(orderId) {
-            if (!confirm(`⚠️ Are you sure you want to delete Order #${orderId}?\n\nThis action CANNOT be undone!`)) {
-                return;
-            }
-            
+        function showDeleteConfirm(orderId) {
+            orderToDelete = orderId;
+            document.getElementById('delete-modal').style.display = 'flex';
+        }
+
+        async function confirmDeleteOrder() {
+            if (!orderToDelete) return;
             try {
-                const response = await fetch(`${API_URL}/orders/${orderId}`, {
-                    method: 'DELETE'
-                });
-                
+                const response = await fetch(`${API_URL}/orders/${orderToDelete}`, { method: 'DELETE' });
                 if (response.ok) {
-                    showToast(`✅ Order #${orderId} deleted successfully!`, 'success');
+                    alert(`Order #${orderToDelete} deleted`);
                     loadOrders();
                 } else {
-                    const error = await response.json();
-                    showToast(error.error || 'Failed to delete order', 'error');
+                    alert('Failed to delete');
                 }
             } catch (error) {
-                showToast('Server error. Please try again.', 'error');
+                alert('Server error');
             }
+            closeDeleteModal();
         }
 
-        function refreshOrders() {
-            loadOrders();
-            showToast('Refreshing orders...', 'success');
-        }
-
-        function closeModal() {
-            document.getElementById('order-modal').classList.remove('active');
+        function refreshOrders() { loadOrders(); }
+        function closeOrderModal() { document.getElementById('order-modal').style.display = 'none'; }
+        function closeDeleteModal() { 
+            document.getElementById('delete-modal').style.display = 'none';
+            orderToDelete = null;
         }
 
         document.getElementById('search-order').addEventListener('input', filterAndDisplay);
-        
-        // Load orders when page opens
         loadOrders();
     </script>
 </body>

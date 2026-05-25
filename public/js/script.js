@@ -102,23 +102,140 @@ function updateOrderDisplay() {
     });
 }
 
-async function checkout() {
-    if (!order.length) return alert('Please add items first');
+// Print receipt after checkout
+function printReceipt(orderId, items, total) {
+    // Calculate max item name length for alignment
+    const maxNameLen = Math.max(...items.map(i => i.name.length), 10);
     
-    const total = order.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-    const itemsForDb = order.flatMap(i => Array(i.quantity).fill({ name: i.name, price: i.price }));
+    let receiptLines = [];
+    receiptLines.push('================================');
+    receiptLines.push('      ☕ INSAYNITEA COFFEE ☕');
+    receiptLines.push('================================');
+    receiptLines.push(`Order #: ${orderId}`);
+    receiptLines.push(`Date: ${new Date().toLocaleString()}`);
+    receiptLines.push('================================');
+    receiptLines.push('');
+    receiptLines.push('ITEMS:');
+    
+    // Add each item with proper alignment
+    items.forEach(item => {
+        const name = item.name.padEnd(maxNameLen);
+        const qty = `${item.quantity} x RM${item.price.toFixed(2)}`;
+        receiptLines.push(` ${name}  ${qty}`);
+    });
+    
+    receiptLines.push('');
+    receiptLines.push('================================');
+    receiptLines.push(`TOTAL: RM${total.toFixed(2)}`);
+    receiptLines.push('================================');
+    receiptLines.push('');
+    receiptLines.push('Thank you for your order!');
+    receiptLines.push('☕ Have a great day! ☕');
+    receiptLines.push('================================');
+    
+    const receipt = receiptLines.join('\n');
+    
+    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Receipt #${orderId}</title>
+            <style>
+                body { 
+                    font-family: 'Courier New', monospace; 
+                    padding: 20px; 
+                    margin: 0;
+                    display: flex;
+                    justify-content: center;
+                }
+                .receipt {
+                    max-width: 350px;
+                    width: 100%;
+                }
+                pre {
+                    font-size: 13px;
+                    font-family: 'Courier New', monospace;
+                    margin: 0;
+                    white-space: pre-wrap;
+                    line-height: 1.4;
+                }
+                button {
+                    margin-top: 20px;
+                    padding: 10px;
+                    width: 100%;
+                    background: #4b672f;
+                    color: white;
+                    border: none;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    font-family: monospace;
+                }
+                @media print {
+                    button { display: none; }
+                    body { padding: 0; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="receipt">
+                <pre>${receipt}</pre>
+                <button onclick="window.print()">🖨️ Print Receipt</button>
+                <button onclick="window.close()">✕ Close</button>
+            </div>
+            <script>
+                setTimeout(() => window.print(), 500);
+            <\/script>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+// ============ CHECKOUT FUNCTION ============
+async function checkout() {
+    if (order.length === 0) {
+        alert('Please add items to your order first');
+        return;
+    }
+    
+    const total = order.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    
+    const itemsForDb = [];
+    order.forEach(item => {
+        for (let i = 0; i < item.quantity; i++) {
+            itemsForDb.push({ name: item.name, price: item.price });
+        }
+    });
     
     try {
-        const response = await fetch(`${API_URL}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: itemsForDb, total }) });
+        const response = await fetch(`${API_URL}/checkout`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: itemsForDb, total })
+        });
+        
         const result = await response.json();
         
         if (result.success) {
-            alert(`✅ Order #${result.orderId} completed!\nTotal: RM${total.toFixed(2)}`);
+            alert(`Order #${result.orderId} completed!\nTotal: RM${total.toFixed(2)}`);
+            
+            const receiptItems = order.map(item => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price
+            }));
+            
+            printReceipt(result.orderId, receiptItems, total);
+            
             order = [];
             updateOrderDisplay();
-        } else alert('Error: ' + (result.error || 'Could not save order'));
+        } else {
+            alert('Error: ' + (result.error || 'Could not save order'));
+        }
     } catch (error) {
-        alert('Server error. Make sure server is running');
+        console.error('Checkout error:', error);
+        alert('Server error. Make sure server is running on port 3000');
     }
 }
 
@@ -139,61 +256,3 @@ document.addEventListener('DOMContentLoaded', () => {
     setupFilters();
     document.querySelector('.checkout-btn')?.addEventListener('click', checkout);
 });
-// Print receipt after checkout
-async function printReceipt(orderId, items, total) {
-    const receipt = `
-        ================================
-           INSAYNITEA COFFEE
-        ================================
-        Order #: ${orderId}
-        Date: ${new Date().toLocaleString()}
-        Cashier: ${sessionStorage.getItem('cashierName') || 'Cashier'}
-        ================================
-        
-        ITEMS:
-        ${items.map(item => `${item.name.padEnd(20)} ${item.quantity} x RM${item.price.toFixed(2)}`).join('\n')}
-        
-        ================================
-        TOTAL: RM${total.toFixed(2)}
-        ================================
-        
-        Thank you for your order!
-        ☕ Have a great day! ☕
-        ================================
-    `;
-    
-    // Create a new window for printing
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <html>
-        <head><title>Receipt #${orderId}</title>
-        <style>
-            body { font-family: monospace; padding: 20px; }
-            pre { font-size: 12px; }
-            @media print {
-                body { margin: 0; padding: 10px; }
-            }
-        </style>
-        </head>
-        <body><pre>${receipt}</pre></body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-    printWindow.close();
-}
-
-// After successful checkout, show receipt
-if (result.success) {
-    const receiptItems = order.map(item => ({
-        name: item.name,
-        quantity: item.quantity,
-        price: item.price
-    }));
-    
-    const receiptUrl = `pages/receipt.html?id=${result.orderId}&total=${total}&items=${encodeURIComponent(JSON.stringify(receiptItems))}`;
-    window.open(receiptUrl, '_blank', 'width=400,height=600');
-    
-    order = [];
-    updateOrderDisplay();
-}

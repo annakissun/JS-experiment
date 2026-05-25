@@ -406,3 +406,18 @@
         justify-content: center;
     }
 }
+
+.print-receipt-btn {
+    background: #4b672f;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 0 0.25rem;
+}
+
+.print-receipt-btn:hover {
+    background: #2c1810;
+    transform: scale(1.05);
+}
