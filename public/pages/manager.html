@@ -6,6 +6,10 @@
     <title>Manager Dashboard - Insaynitea</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/manager.css">
+
+    <link rel="stylesheet" href="../css/modal.css">
+    <script src="../js/modal.js"></script>
+
 </head>
 <body>
     <div class="manager-container">
@@ -15,7 +19,7 @@
                 <a href="order-history.html" class="back-btn">Order History</a>
                 <a href="reports.html" class="order-history-btn">Sales Reports</a>
                 <a href="users.html" class="order-history-btn">Manage Users</a>
-                <a href="../index.html" class="back-btn">← Logout</a>
+                <a href="#" onclick="confirmLogout(() => window.location.href='index.html')" class="back-btn">← Logout</a>
                 
             </div>
         </div>

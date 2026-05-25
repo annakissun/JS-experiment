@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Insaynitea Coffee Menu</title>
     <link rel="stylesheet" href="css/style.css">
+
+    <link rel="stylesheet" href="css/modal.css">
+    <script src="js/modal.js"></script>
+
 </head>
 <body>
     <!-- Navigation buttons -->
     <div style="text-align: right; margin-bottom: 1rem;">
         <span>Welcome, <span id="user-name">Cashier</span></span>
-        <a href="index.html" class="manager-nav-btn" style="margin-left: 1rem;">← Logout</a>
+        <a href="#" onclick="confirmLogout(() => window.location.href='index.html')" class="manager-nav-btn" style="margin-left: 1rem;">← Logout</a>
     </div>
 
     <div class="menu-container">

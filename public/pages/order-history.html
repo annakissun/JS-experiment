@@ -6,6 +6,10 @@
     <title>Order History - Insaynitea</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/order-history.css">
+
+    <link rel="stylesheet" href="../css/modal.css">
+    <script src="../js/modal.js"></script>
+
 </head>
 <body>
     <div class="history-container">
@@ -252,6 +256,17 @@
 
         document.getElementById('search-order').addEventListener('input', filterAndDisplay);
         loadOrders();
+
+        function deleteOrder(orderId, orderName) {
+            confirmDelete(`Order #${orderId}`, async () => {
+                const response = await fetch(`${API_URL}/orders/${orderId}`, { method: 'DELETE' });
+                if (response.ok) {
+                    showSuccess(`Order #${orderId} deleted successfully!`, () => loadOrders());
+                } else {
+                    showError('Failed to delete order');
+                }
+            });
+        }
     </script>
 </body>
 </html>

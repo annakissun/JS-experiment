@@ -218,19 +218,12 @@ async function checkout() {
         const result = await response.json();
         
         if (result.success) {
-            alert(`Order #${result.orderId} completed!\nTotal: RM${total.toFixed(2)}`);
-            
-            const receiptItems = order.map(item => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price
-            }));
-            
+            showSuccess(`Order #${result.orderId} completed!\nTotal: RM${total.toFixed(2)}`, () => {
             printReceipt(result.orderId, receiptItems, total);
-            
             order = [];
             updateOrderDisplay();
-        } else {
+        });
+        }else {
             alert('Error: ' + (result.error || 'Could not save order'));
         }
     } catch (error) {
