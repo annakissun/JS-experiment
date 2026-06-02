@@ -10,6 +10,7 @@ async function loadMenu() {
         const items = await response.json();
         displayMenu(items);
     } catch (error) {
+        console.error('Error loading menu:', error);
         document.getElementById('menu-grid').innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:2rem; color:red;">❌ Failed to load menu</div>';
     }
 }
@@ -102,9 +103,8 @@ function updateOrderDisplay() {
     });
 }
 
-// Print receipt after checkout
+// ============ PRINT RECEIPT FUNCTION ============
 function printReceipt(orderId, items, total) {
-    // Calculate max item name length for alignment
     const maxNameLen = Math.max(...items.map(i => i.name.length), 10);
     
     let receiptLines = [];
@@ -117,7 +117,6 @@ function printReceipt(orderId, items, total) {
     receiptLines.push('');
     receiptLines.push('ITEMS:');
     
-    // Add each item with proper alignment
     items.forEach(item => {
         const name = item.name.padEnd(maxNameLen);
         const qty = `${item.quantity} x RM${item.price.toFixed(2)}`;
@@ -183,9 +182,7 @@ function printReceipt(orderId, items, total) {
                 <button onclick="window.print()">🖨️ Print Receipt</button>
                 <button onclick="window.close()">✕ Close</button>
             </div>
-            <script>
-                setTimeout(() => window.print(), 500);
-            <\/script>
+            <script>setTimeout(() => window.print(), 500);<\/script>
         </body>
         </html>
     `);
@@ -198,6 +195,10 @@ async function checkout() {
         alert('Please add items to your order first');
         return;
     }
+    
+    // Get the logged-in user from sessionStorage
+    const user = JSON.parse(sessionStorage.getItem('user') || '{}');
+    const employeeId = user.EmployeeID || null;
     
     const total = order.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
@@ -212,33 +213,40 @@ async function checkout() {
         const response = await fetch(`${API_URL}/checkout`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: itemsForDb, total })
+            body: JSON.stringify({ 
+                items: itemsForDb, 
+                total: total,
+                employeeId: employeeId
+            })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            showSuccess(`Order #${result.orderId} completed!\nTotal: RM${total.toFixed(2)}`, () => {
-            printReceipt(result.orderId, receiptItems, total);
-            order = [];
-            updateOrderDisplay();
-        });
-        }else {
-            alert('Error: ' + (result.error || 'Could not save order'));
-        }
-
-        if (result.success) {
-            const receiptItems = order.map(item => ({
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price
-            }));
-            
-            notifyCheckoutSuccess(result.orderId, total, () => {
-                printReceipt(result.orderId, receiptItems, total);
-                order = [];
-                updateOrderDisplay();
+            // Show success modal
+            showModal({
+                icon: '✅',
+                title: 'Order Completed!',
+                message: `Order #${result.orderId} completed!\nTotal: RM${total.toFixed(2)}`,
+                confirmText: 'Print Receipt',
+                cancelText: 'Close',
+                onConfirm: () => {
+                    const receiptItems = order.map(item => ({
+                        name: item.name,
+                        quantity: item.quantity,
+                        price: item.price
+                    }));
+                    printReceipt(result.orderId, receiptItems, total);
+                    order = [];
+                    updateOrderDisplay();
+                },
+                onCancel: () => {
+                    order = [];
+                    updateOrderDisplay();
+                }
             });
+        } else {
+            alert('Error: ' + (result.error || 'Could not save order'));
         }
     } catch (error) {
         console.error('Checkout error:', error);

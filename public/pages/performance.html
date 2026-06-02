@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashier Performance - Insaynitea</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/performance.css">
+    <link rel="stylesheet" href="../css/modal.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="../js/modal.js"></script>
+</head>
+<body>
+    <div class="performance-container">
+        <div class="performance-header">
+            <h1>🏆 Cashier Performance Dashboard</h1>
+            <div class="button-group">
+                <a href="manager.html" class="nav-btn">← Back to Manager</a>
+                <a href="#" onclick="window.print()" class="nav-btn">🖨️ Print Report</a>
+            </div>
+        </div>
+
+        <!-- Time Filter -->
+        <div class="time-filter">
+            <button class="filter-btn active" onclick="setPeriod('week')">This Week</button>
+            <button class="filter-btn" onclick="setPeriod('month')">This Month</button>
+            <button class="filter-btn" onclick="setPeriod('year')">This Year</button>
+            <button class="filter-btn" onclick="setPeriod('all')">All Time</button>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                
+                <div class="kpi-info">
+                    <div class="kpi-value" id="total-cashiers">0</div>
+                    <div class="kpi-label">Active Cashiers</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+             
+                <div class="kpi-info">
+                    <div class="kpi-value" id="total-orders-all">0</div>
+                    <div class="kpi-label">Total Orders</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+            
+                <div class="kpi-info">
+                    <div class="kpi-value" id="total-revenue-all">RM0</div>
+                    <div class="kpi-label">Total Revenue</div>
+                </div>
+            </div>
+            <div class="kpi-card">
+              
+                <div class="kpi-info">
+                    <div class="kpi-value" id="avg-per-cashier">0</div>
+                    <div class="kpi-label">Avg Orders/Cashier</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+            <div class="chart-card">
+                <h3>📊 Orders by Cashier</h3>
+                <canvas id="ordersChart" width="400" height="250"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>💰 Revenue by Cashier</h3>
+                <canvas id="revenueChart" width="400" height="250"></canvas>
+            </div>
+        </div>
+
+        <!-- Leaderboard Table -->
+        <div class="leaderboard-section">
+            <h3>🏅 Cashier Leaderboard</h3>
+            <div class="table-container">
+                <table class="leaderboard-table" id="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Cashier Name</th>
+                            <th>Orders</th>
+                            <th>Total Revenue</th>
+                            <th>Avg Order</th>
+                            <th>Performance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboard-body">
+                        <tr><td colspan="6" class="loading">Loading data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    const API_URL = `${window.location.protocol}//${window.location.hostname}:3000/api`;
+    let currentPeriod = 'week';
+    let performanceData = [];
+
+    async function setPeriod(period) {
+        currentPeriod = period;
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        await loadPerformanceData();
+    }
+
+    async function loadPerformanceData() {
+        try {
+            const dates = getDateRange();
+            
+            // Fetch orders with employee info
+            const url = `${API_URL}/orders-with-employees?startDate=${dates.start}&endDate=${dates.end}`;
+            console.log('Fetching:', url);
+            
+            const response = await fetch(url);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            let data = await response.json();
+            console.log('Raw data:', data);
+            
+            // Make sure data is an array
+            if (!Array.isArray(data)) {
+                data = [];
+            }
+            
+            // Filter out cashiers with 0 orders if desired, or keep them
+            performanceData = data;
+            
+            // Update KPIs
+            const totalCashiers = performanceData.filter(c => c.orders > 0).length;
+            const totalOrders = performanceData.reduce((sum, c) => sum + (parseInt(c.orders) || 0), 0);
+            const totalRevenue = performanceData.reduce((sum, c) => sum + (parseFloat(c.revenue) || 0), 0);
+            const avgPerCashier = totalCashiers > 0 ? (totalOrders / totalCashiers).toFixed(1) : 0;
+            
+            document.getElementById('total-cashiers').textContent = totalCashiers;
+            document.getElementById('total-orders-all').textContent = totalOrders;
+            document.getElementById('total-revenue-all').textContent = `RM${totalRevenue.toFixed(2)}`;
+            document.getElementById('avg-per-cashier').textContent = avgPerCashier;
+            
+            // Load charts and table
+            loadOrdersChart(performanceData);
+            loadRevenueChart(performanceData);
+            loadLeaderboard(performanceData);
+            
+        } catch (error) {
+            console.error('Error loading performance data:', error);
+            document.getElementById('leaderboard-body').innerHTML = `<tr><td colspan="6" class="loading">❌ Failed to load data: ${error.message}</td></tr>`;
+        }
+    }
+
+    function getDateRange() {
+        const now = new Date();
+        let start = new Date();
+        
+        switch(currentPeriod) {
+            case 'week':
+                start.setDate(now.getDate() - 7);
+                break;
+            case 'month':
+                start.setMonth(now.getMonth() - 1);
+                break;
+            case 'year':
+                start.setFullYear(now.getFullYear() - 1);
+                break;
+            case 'all':
+                start = new Date(2020, 0, 1);
+                break;
+            default:
+                start.setDate(now.getDate() - 7);
+        }
+        
+        return {
+            start: start.toISOString().split('T')[0],
+            end: now.toISOString().split('T')[0]
+        };
+    }
+
+    function loadOrdersChart(data) {
+        const ctx = document.getElementById('ordersChart').getContext('2d');
+        
+        // Filter out cashiers with 0 orders for the chart
+        const filtered = data.filter(c => c.orders > 0);
+        const sorted = [...filtered].sort((a, b) => b.orders - a.orders);
+        const labels = sorted.map(c => c.Name.split(' ')[0]);
+        const orderCounts = sorted.map(c => parseInt(c.orders));
+        
+        if (window.ordersChartInstance) window.ordersChartInstance.destroy();
+        
+        window.ordersChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Orders',
+                    data: orderCounts,
+                    backgroundColor: '#4b672f',
+                    borderRadius: 8,
+                    barPercentage: 0.7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { callbacks: { label: (ctx) => `${ctx.raw} orders` } }
+                }
+            }
+        });
+    }
+
+    function loadRevenueChart(data) {
+        const ctx = document.getElementById('revenueChart').getContext('2d');
+        
+        const filtered = data.filter(c => c.revenue > 0);
+        const sorted = [...filtered].sort((a, b) => b.revenue - a.revenue);
+        const labels = sorted.map(c => c.Name.split(' ')[0]);
+        const revenues = sorted.map(c => parseFloat(c.revenue));
+        
+        if (window.revenueChartInstance) window.revenueChartInstance.destroy();
+        
+        window.revenueChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Revenue (RM)',
+                    data: revenues,
+                    backgroundColor: '#4b672f',
+                    borderRadius: 8,
+                    barPercentage: 0.7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: { callbacks: { label: (ctx) => `RM${ctx.raw.toFixed(2)}` } }
+                }
+            }
+        });
+    }
+
+    function loadLeaderboard(data) {
+        const tbody = document.getElementById('leaderboard-body');
+        
+        if (!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="loading">No data available</td></tr>';
+            return;
+        }
+        
+        // Sort by orders (highest first)
+        const sorted = [...data].sort((a, b) => b.orders - a.orders);
+        const maxOrders = sorted[0]?.orders || 1;
+        
+        tbody.innerHTML = sorted.map((cashier, index) => {
+            const orders = parseInt(cashier.orders);
+            const revenue = parseFloat(cashier.revenue);
+            const percentage = (orders / maxOrders) * 100;
+            let medal = '';
+            let rankClass = '';
+            
+            if (index === 0 && orders > 0) { medal = '🥇'; rankClass = 'rank-1'; }
+            else if (index === 1 && orders > 0) { medal = '🥈'; rankClass = 'rank-2'; }
+            else if (index === 2 && orders > 0) { medal = '🥉'; rankClass = 'rank-3'; }
+            
+            const avgOrder = orders > 0 ? (revenue / orders).toFixed(2) : 0;
+            
+            return `
+                <tr class="${rankClass}">
+                    <td class="rank">${medal} #${index + 1}</td>
+                    <td class="cashier-name">${cashier.Name}</td>
+                    <td class="orders">${orders}</td>
+                    <td class="revenue">RM${revenue.toFixed(2)}</td>
+                    <td class="avg-order">RM${avgOrder}</td>
+                    <td class="performance-bar">
+                        ${orders > 0 ? `
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: ${percentage}%"></div>
+                            <span class="bar-label">${percentage.toFixed(0)}%</span>
+                        </div>
+                        ` : '-'}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // Load on page load
+    loadPerformanceData();
+</script>
+</body>
+</html>

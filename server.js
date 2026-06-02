@@ -67,7 +67,6 @@ app.post('/api/register', async (req, res) => {
 });
 
 // ============ MENU ROUTES ============
-// ============ MENU ROUTES ============
 
 // Get ONLY available items (for POS)
 app.get('/api/menu', (req, res) => {
@@ -130,26 +129,32 @@ app.delete('/api/menu/:id', (req, res) => {
 });
 
 // ============ ORDER ROUTES ============
+// Checkout
 app.post('/api/checkout', (req, res) => {
-    const { items, total } = req.body;
+    const { items, total, employeeId } = req.body;  // 👈 ADD employeeId
+    
     if (!items?.length) return res.status(400).json({ error: 'No items in order' });
     
-    db.query('INSERT INTO orders (OrderDate, TotalAmount) VALUES (NOW(), ?)', [total], (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        
-        const orderId = result.insertId;
-        let completed = 0;
-        
-        items.forEach(item => {
-            db.query('SELECT ItemID FROM menuitem WHERE ItemName = ?', [item.name], (err, itemResult) => {
-                if (!err && itemResult?.length) {
-                    db.query('INSERT INTO orderdetails (OrderID, ItemID, Quantity, Subtotal) VALUES (?, ?, ?, ?)',
-                        [orderId, itemResult[0].ItemID, 1, item.price]);
-                }
-                if (++completed === items.length) res.json({ success: true, orderId });
+    // Insert with EmployeeID
+    db.query('INSERT INTO orders (OrderDate, TotalAmount, EmployeeID) VALUES (NOW(), ?, ?)', 
+        [total, employeeId || null],  // 👈 ADD employeeId
+        (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            const orderId = result.insertId;
+            let completed = 0;
+            
+            items.forEach(item => {
+                db.query('SELECT ItemID FROM menuitem WHERE ItemName = ?', [item.name], (err, itemResult) => {
+                    if (!err && itemResult?.length) {
+                        db.query('INSERT INTO orderdetails (OrderID, ItemID, Quantity, Subtotal) VALUES (?, ?, ?, ?)',
+                            [orderId, itemResult[0].ItemID, 1, item.price]);
+                    }
+                    if (++completed === items.length) res.json({ success: true, orderId });
+                });
             });
-        });
-    });
+        }
+    );
 });
 
 app.get('/api/orders', (req, res) => {
@@ -262,6 +267,44 @@ app.get('/api/sales-stats', (req, res) => {
         });
     });
 });
+
+// ============ CASHIER PERFORMANCE REPORT ============
+app.get('/api/orders-with-employees', (req, res) => {
+    const { startDate, endDate } = req.query;
+    
+    console.log('Performance request received:', { startDate, endDate });
+    
+    let query = `
+        SELECT 
+            e.EmployeeID,
+            e.Name,
+            COUNT(o.OrderID) as orders,
+            COALESCE(SUM(o.TotalAmount), 0) as revenue
+        FROM employee e
+        LEFT JOIN orders o ON e.EmployeeID = o.EmployeeID
+        WHERE e.Role = 'cashier'
+    `;
+    
+    const params = [];
+    
+    if (startDate && endDate) {
+        query += ` AND DATE(o.OrderDate) BETWEEN ? AND ?`;
+        params.push(startDate, endDate);
+    }
+    
+    query += ` GROUP BY e.EmployeeID ORDER BY orders DESC`;
+    
+    db.query(query, params, (err, results) => {
+        if (err) {
+            console.error('Error fetching performance:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        console.log('Performance results:', results.length, 'cashiers found');
+        res.json(results);
+    });
+});
+
 
 // ============ USER MANAGEMENT ============
 
