@@ -134,52 +134,30 @@ function printReceipt(orderId, items, total) {
     
     const receipt = receiptLines.join('\n');
     
-    const printWindow = window.open('', '_blank', 'width=400,height=600');
+    const printWindow = window.open('', '_blank', 'width=450,height=600');
     printWindow.document.write(`
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Receipt #${orderId}</title>
+            <title>Receipt #${orderId} - Insaynitea</title>
             <style>
-                body { 
-                    font-family: 'Courier New', monospace; 
-                    padding: 20px; 
-                    margin: 0;
-                    display: flex;
-                    justify-content: center;
-                }
-                .receipt {
-                    max-width: 350px;
-                    width: 100%;
-                }
-                pre {
-                    font-size: 13px;
-                    font-family: 'Courier New', monospace;
-                    margin: 0;
-                    white-space: pre-wrap;
-                    line-height: 1.4;
-                }
-                button {
-                    margin-top: 20px;
-                    padding: 10px;
-                    width: 100%;
-                    background: #4b672f;
-                    color: white;
-                    border: none;
-                    border-radius: 5px;
-                    cursor: pointer;
-                    font-family: monospace;
-                }
-                @media print {
-                    button { display: none; }
-                    body { padding: 0; }
-                }
+                body { font-family: 'Courier New', monospace; padding: 20px; margin: 0; display: flex; justify-content: center; background: #f0e5dc; }
+                .receipt { max-width: 380px; width: 100%; background: white; padding: 20px; border-radius: 12px; }
+                pre { font-size: 13px; font-family: 'Courier New', monospace; margin: 0; white-space: pre-wrap; }
+                .qr-section { text-align: center; margin-top: 20px; padding-top: 15px; border-top: 1px dashed #ccc; }
+                .qr-section img { width: 180px; height: 180px; margin: 10px auto; display: block; }
+                button { margin-top: 20px; padding: 10px; width: 100%; background: #4b672f; color: white; border: none; border-radius: 8px; cursor: pointer; }
+                @media print { button { display: none; } body { background: white; } .receipt { box-shadow: none; } }
             </style>
         </head>
         <body>
             <div class="receipt">
                 <pre>${receipt}</pre>
-                <button onclick="window.print()">🖨️ Print Receipt</button>
+                <div class="qr-section">
+                    <img src="../img/bank-qr.png" alt="Payment QR Code" onerror="this.style.display='none'">
+                    <p style="font-size: 11px;">Scan QR code to pay</p>
+                </div>
+                <button onclick="window.print()">🖨️ Print</button>
                 <button onclick="window.close()">✕ Close</button>
             </div>
             <script>setTimeout(() => window.print(), 500);<\/script>
@@ -189,6 +167,97 @@ function printReceipt(orderId, items, total) {
     printWindow.document.close();
 }
 
+// ============ PROCESS PAYMENT ============
+async function processPayment(orderId, total, currentOrder, method) {
+    try {
+        const response = await fetch(`${API_URL}/orders/${orderId}/payment`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentMethod: method, paymentStatus: 'completed' })
+        });
+        
+        if (response.ok) {
+            const receiptItems = currentOrder.map(item => ({
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price
+            }));
+            
+            printReceipt(orderId, receiptItems, total);
+            
+            if (method === 'qr') {
+                const paymentUrl = `pages/payment.html?id=${orderId}&total=${total}`;
+                window.open(paymentUrl, '_blank', 'width=450,height=700');
+            }
+            
+            // Replace alert with modal
+            showModal({
+                icon: method === 'qr' ? '📱' : '💵',
+                title: 'Payment Completed!',
+                message: `Order #${orderId} completed!\nPayment method: ${method.toUpperCase()}\nTotal: RM${total.toFixed(2)}`,
+                confirmText: 'OK',
+                hideCancel: true,
+                type: 'success',
+                onConfirm: () => {
+                    order = [];
+                    updateOrderDisplay();
+                }
+            });
+        } else {
+            showError('Failed to process payment');
+        }
+    } catch (error) {
+        console.error('Payment error:', error);
+        showError('Server error');
+    }
+}
+
+// ============ PAYMENT METHOD MODAL ============
+function showPaymentMethodModal(orderId, total, currentOrder) {
+    const modalOverlay = document.createElement('div');
+    modalOverlay.style.cssText = `
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px);
+        display: flex; justify-content: center; align-items: center;
+        z-index: 10001;
+    `;
+    
+    modalOverlay.innerHTML = `
+        <div style="max-width: 400px; width: 90%; background: #fefaf5; border-radius: 20px; overflow: hidden;">
+            <div style="padding: 1.5rem 1.5rem 0 1.5rem; text-align: center;">
+                <div style="font-size: 3rem;">💰</div>
+                <h3 style="color: #2c1810;">Select Payment Method</h3>
+            </div>
+            <div style="padding: 1rem 1.5rem; text-align: center;">
+                <p style="font-size: 1.3rem; font-weight: bold; margin-bottom: 1.5rem; color: #2c1810;">Total: RM${total.toFixed(2)}</p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button id="cash-pay-btn" style="background: #4b672f; color: white; border: none; padding: 12px 28px; border-radius: 40px; cursor: pointer; font-weight: bold;">💵 Cash</button>
+                    <button id="qr-pay-btn" style="background: #2c1810; color: white; border: none; padding: 12px 28px; border-radius: 40px; cursor: pointer; font-weight: bold;">📱 QR Pay</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modalOverlay);
+    
+    document.getElementById('cash-pay-btn').onclick = () => {
+        modalOverlay.remove();
+        processPayment(orderId, total, currentOrder, 'cash');
+    };
+    
+    document.getElementById('qr-pay-btn').onclick = () => {
+        modalOverlay.remove();
+        processPayment(orderId, total, currentOrder, 'qr');
+    };
+    
+    modalOverlay.onclick = (e) => {
+        if (e.target === modalOverlay) {
+            modalOverlay.remove();
+            alert('Payment cancelled');
+        }
+    };
+}
+
 // ============ CHECKOUT FUNCTION ============
 async function checkout() {
     if (order.length === 0) {
@@ -196,10 +265,8 @@ async function checkout() {
         return;
     }
     
-    // Get the logged-in user from sessionStorage
     const user = JSON.parse(sessionStorage.getItem('user') || '{}');
     const employeeId = user.EmployeeID || null;
-    
     const total = order.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     
     const itemsForDb = [];
@@ -213,44 +280,19 @@ async function checkout() {
         const response = await fetch(`${API_URL}/checkout`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                items: itemsForDb, 
-                total: total,
-                employeeId: employeeId
-            })
+            body: JSON.stringify({ items: itemsForDb, total, employeeId })
         });
         
         const result = await response.json();
         
         if (result.success) {
-            // Show success modal
-            showModal({
-                icon: '✅',
-                title: 'Order Completed!',
-                message: `Order #${result.orderId} completed!\nTotal: RM${total.toFixed(2)}`,
-                confirmText: 'Print Receipt',
-                cancelText: 'Close',
-                onConfirm: () => {
-                    const receiptItems = order.map(item => ({
-                        name: item.name,
-                        quantity: item.quantity,
-                        price: item.price
-                    }));
-                    printReceipt(result.orderId, receiptItems, total);
-                    order = [];
-                    updateOrderDisplay();
-                },
-                onCancel: () => {
-                    order = [];
-                    updateOrderDisplay();
-                }
-            });
+            showPaymentMethodModal(result.orderId, total, [...order]);
         } else {
             alert('Error: ' + (result.error || 'Could not save order'));
         }
     } catch (error) {
         console.error('Checkout error:', error);
-        alert('Server error. Make sure server is running on port 3000');
+        alert('Server error');
     }
 }
 

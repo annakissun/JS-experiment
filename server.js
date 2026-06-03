@@ -131,13 +131,13 @@ app.delete('/api/menu/:id', (req, res) => {
 // ============ ORDER ROUTES ============
 // Checkout
 app.post('/api/checkout', (req, res) => {
-    const { items, total, employeeId } = req.body;  // 👈 ADD employeeId
+    const { items, total, employeeId } = req.body;
     
     if (!items?.length) return res.status(400).json({ error: 'No items in order' });
     
-    // Insert with EmployeeID
-    db.query('INSERT INTO orders (OrderDate, TotalAmount, EmployeeID) VALUES (NOW(), ?, ?)', 
-        [total, employeeId || null],  // 👈 ADD employeeId
+    // Insert with PaymentMethod and PaymentStatus as NULL initially
+    db.query('INSERT INTO orders (OrderDate, TotalAmount, EmployeeID, PaymentStatus) VALUES (NOW(), ?, ?, "pending")', 
+        [total, employeeId || null],
         (err, result) => {
             if (err) return res.status(500).json({ error: err.message });
             
@@ -185,6 +185,37 @@ app.delete('/api/orders/:id', (req, res) => {
         });
     });
 });
+
+// ============ UPDATE PAYMENT METHOD ============
+app.put('/api/orders/:id/payment', (req, res) => {
+    const { paymentMethod, paymentStatus } = req.body;
+    const orderId = req.params.id;
+    
+    console.log('💰 Payment update request:', { orderId, paymentMethod, paymentStatus });
+    
+    if (!paymentMethod) {
+        return res.status(400).json({ error: 'Payment method required' });
+    }
+    
+    db.query('UPDATE orders SET PaymentMethod = ?, PaymentStatus = ? WHERE OrderID = ?',
+        [paymentMethod, paymentStatus || 'completed', orderId],
+        (err, result) => {
+            if (err) {
+                console.error('Error updating payment:', err);
+                return res.status(500).json({ error: err.message });
+            }
+            
+            console.log('Payment update result:', result);
+            
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'Order not found' });
+            }
+            
+            res.json({ success: true });
+        }
+    );
+});
+
 // ============ TOP SELLING ITEMS REPORT (WITH DATE FILTER) ============
 app.get('/api/top-items', (req, res) => {
     const { startDate, endDate, limit } = req.query;
@@ -352,6 +383,8 @@ app.delete('/api/users/:id', (req, res) => {
         res.json({ success: true });
     });
 });
+
+
 
 // ============ START SERVER ============
 app.listen(PORT, '0.0.0.0', () => {
