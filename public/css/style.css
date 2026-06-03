@@ -359,3 +359,12 @@ header h1 span {
     display: inline-block;
     font-size: 14px;
 }
+
+/* Hot and Iced icons */
+.tile-icon[data-hot="true"] {
+    filter: drop-shadow(0 0 2px #ff6b35);
+}
+
+.tile-icon[data-iced="true"] {
+    filter: drop-shadow(0 0 2px #4fc3f7);
+}

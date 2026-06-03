@@ -25,14 +25,14 @@ function displayMenu(items) {
     }
     
     menuGrid.innerHTML = filtered.map(item => `
-        <div class="menu-tile">
-            <div class="tile-content">
-                <span class="tile-icon">☕</span>
-                <h3>${item.ItemName}</h3>
-                <p class="price">RM${parseFloat(item.Price).toFixed(2)}</p>
-                <button class="add-order-btn" data-name="${item.ItemName}" data-price="${item.Price}">+ ADD</button>
-            </div>
+    <div class="menu-tile">
+        <div class="tile-content">
+            <span class="tile-icon">${item.Category === 'hot' ? '🔥' : '🧊'}</span>
+            <h3>${item.ItemName}</h3>
+            <p class="price">RM${parseFloat(item.Price).toFixed(2)}</p>
+            <button class="add-order-btn" data-name="${item.ItemName}" data-price="${item.Price}">+ ADD</button>
         </div>
+    </div>
     `).join('');
     
     document.querySelectorAll('.add-order-btn').forEach(btn => {
