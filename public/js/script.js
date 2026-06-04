@@ -6,7 +6,7 @@ let order = [];
 // ============ MENU FUNCTIONS ============
 async function loadMenu() {
     try {
-        const response = await fetch(`${API_URL}/menu`);
+        const response = await fetch(`${API_URL}/menu-with-sales`);
         const items = await response.json();
         displayMenu(items);
     } catch (error) {
@@ -24,22 +24,38 @@ function displayMenu(items) {
         return;
     }
     
-    menuGrid.innerHTML = filtered.map(item => `
-    <div class="menu-tile">
-        <div class="tile-content">
-            <span class="tile-icon">${item.Category === 'hot' ? '🔥' : '🧊'}</span>
-            <h3>${item.ItemName}</h3>
-            <p class="price">RM${parseFloat(item.Price).toFixed(2)}</p>
-            <button class="add-order-btn" data-name="${item.ItemName}" data-price="${item.Price}">+ ADD</button>
-        </div>
-    </div>
-    `).join('');
+    // Find top seller for comparison (convert to numbers!)
+    const salesNumbers = filtered.map(i => Number(i.TotalSold) || 0);
+    const maxSold = Math.max(...salesNumbers);
+    
+    menuGrid.innerHTML = filtered.map(item => {
+        const totalSold = Number(item.TotalSold) || 0;
+        let badge = '';
+        
+        // Determine badge type
+        if (totalSold === maxSold && totalSold > 0) {
+            badge = '<span class="bestseller-badge">🏆 BESTSELLER</span>';
+        } else if (totalSold > 10) {
+            badge = '<span class="popular-badge">🔥 POPULAR</span>';
+        }
+        
+        return `
+            <div class="menu-tile">
+                <div class="tile-content">
+                    ${badge}
+                    <span class="tile-icon">${item.Category === 'hot' ? '🔥' : '🧊'}</span>
+                    <h3>${item.ItemName}</h3>
+                    <p class="price">RM${parseFloat(item.Price).toFixed(2)}</p>
+                    <button class="add-order-btn" data-name="${item.ItemName}" data-price="${item.Price}">+ ADD</button>
+                </div>
+            </div>
+        `;
+    }).join('');
     
     document.querySelectorAll('.add-order-btn').forEach(btn => {
         btn.addEventListener('click', () => addToOrder({ name: btn.dataset.name, price: parseFloat(btn.dataset.price) }));
     });
 }
-
 // ============ ORDER FUNCTIONS ============
 function addToOrder(item) {
     const existing = order.find(i => i.name === item.name);
@@ -101,6 +117,51 @@ function updateOrderDisplay() {
             updateOrderDisplay();
         });
     });
+}
+
+// ============ LOAD TOP SELLER ============
+async function loadTopSeller() {
+    console.log('loadTopSeller started');
+    const topSellerElement = document.getElementById('top-seller-name');
+    
+    if (!topSellerElement) {
+        console.log('Top seller element not found yet');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/menu-with-sales`);
+        const items = await response.json();
+        console.log('Items received:', items);
+        
+        const availableItems = items.filter(item => item.IsAvailable === 1);
+        console.log('Available items:', availableItems);
+        
+        if (availableItems.length === 0) {
+            topSellerElement.innerHTML = 'No items available';
+            return;
+        }
+        
+        // Convert TotalSold to numbers (important!)
+        const salesNumbers = availableItems.map(i => Number(i.TotalSold) || 0);
+        console.log('Sales numbers:', salesNumbers);
+        
+        const maxSold = Math.max(...salesNumbers);
+        console.log('Max sold:', maxSold);
+        
+        const topSellers = availableItems.filter(i => (Number(i.TotalSold) || 0) === maxSold);
+        console.log('Top sellers:', topSellers);
+        
+        if (topSellers.length > 0 && maxSold > 0) {
+            const topNames = topSellers.map(i => i.ItemName).join(' & ');
+            topSellerElement.innerHTML = `${topNames} (${maxSold} sold)`;
+        } else {
+            topSellerElement.innerHTML = 'No sales yet';
+        }
+    } catch (error) {
+        console.error('Error loading top seller:', error);
+        topSellerElement.innerHTML = 'Unable to load';
+    }
 }
 
 // ============ PRINT RECEIPT FUNCTION ============
@@ -311,5 +372,6 @@ function setupFilters() {
 document.addEventListener('DOMContentLoaded', () => {
     loadMenu();
     setupFilters();
+    loadTopSeller();
     document.querySelector('.checkout-btn')?.addEventListener('click', checkout);
 });

@@ -368,3 +368,75 @@ header h1 span {
 .tile-icon[data-iced="true"] {
     filter: drop-shadow(0 0 2px #4fc3f7);
 }
+
+/* Bestseller Badge Styles */
+.bestseller-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    color: #2c1810;
+    font-size: 0.65rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.popular-badge {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: #ff6b35;
+    color: white;
+    font-size: 0.6rem;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 20px;
+}
+
+/* Make tile-content relative to position badges */
+.tile-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 1rem;
+    text-align: center;
+}
+
+/* Top Seller Section */
+.top-seller-section {
+    background: linear-gradient(135deg, #ffd700, #ffb347);
+    border-radius: 12px;
+    padding: 0.75rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+
+.top-seller-header {
+    font-weight: bold;
+    color: #2c1810;
+    font-size: 0.8rem;
+}
+
+.top-seller-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 0.25rem;
+    font-weight: bold;
+    color: #2c1810;
+}
+
+.top-seller-icon {
+    font-size: 1.2rem;
+}
+
+#top-seller-name {
+    font-size: 1rem;
+}

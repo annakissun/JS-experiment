@@ -112,29 +112,31 @@ window.editItem = async (id) => {
             return;
         }
         
-        // Create modal for editing
+        // Use the same format that worked in the test
+        const modalHtml = `
+            <div style="padding: 10px; text-align: left;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Item Name</label>
+                    <input type="text" id="edit-name" value="${item.ItemName}" style="width: 100%; padding: 8px; border: 1px solid #4b672f; border-radius: 5px; box-sizing: border-box;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Category</label>
+                    <select id="edit-category" style="width: 100%; padding: 8px; border: 1px solid #4b672f; border-radius: 5px; box-sizing: border-box;">
+                        <option value="hot" ${item.Category === 'hot' ? 'selected' : ''}>🔥 Hot</option>
+                        <option value="iced" ${item.Category === 'iced' ? 'selected' : ''}>🧊 Iced</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: bold;">Price (RM)</label>
+                    <input type="number" id="edit-price" value="${item.Price}" step="0.01" style="width: 100%; padding: 8px; border: 1px solid #4b672f; border-radius: 5px; box-sizing: border-box;">
+                </div>
+            </div>
+        `;
+        
         showModal({
             icon: '✏️',
             title: 'Edit Menu Item',
-            message: `
-                <div class="modal-form">
-                    <div class="form-group">
-                        <label>Item Name</label>
-                        <input type="text" id="edit-name" value="${item.ItemName}" class="modal-input">
-                    </div>
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select id="edit-category" class="modal-select">
-                            <option value="hot" ${item.Category === 'hot' ? 'selected' : ''}>🔥 Hot</option>
-                            <option value="iced" ${item.Category === 'iced' ? 'selected' : ''}>❄️ Iced</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Price (RM)</label>
-                        <input type="number" id="edit-price" value="${item.Price}" step="0.01" class="modal-input">
-                    </div>
-                </div>
-            `,
+            message: modalHtml,
             confirmText: 'Save Changes',
             cancelText: 'Cancel',
             onConfirm: async () => {
@@ -147,13 +149,13 @@ window.editItem = async (id) => {
                     return;
                 }
                 
-                const response = await fetch(`${API_URL}/menu/${id}`, {
+                const saveResponse = await fetch(`${API_URL}/menu/${id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, category, price })
                 });
                 
-                if (response.ok) {
+                if (saveResponse.ok) {
                     showModal({
                         icon: '✅',
                         title: 'Item Updated',
@@ -164,7 +166,7 @@ window.editItem = async (id) => {
                         onConfirm: () => loadItems()
                     });
                 } else {
-                    const error = await response.json();
+                    const error = await saveResponse.json();
                     showError(error.error || 'Failed to update item');
                 }
             }

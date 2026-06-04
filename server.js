@@ -336,6 +336,28 @@ app.get('/api/orders-with-employees', (req, res) => {
     });
 });
 
+// ============ MENU WITH SALES COUNTS (for bestseller badge) ============
+app.get('/api/menu-with-sales', (req, res) => {
+    const query = `
+        SELECT 
+            mi.ItemID,
+            mi.ItemName,
+            mi.Category,
+            mi.Price,
+            mi.IsAvailable,
+            COALESCE(SUM(od.Quantity), 0) as TotalSold
+        FROM menuitem mi
+        LEFT JOIN orderdetails od ON mi.ItemID = od.ItemID
+        GROUP BY mi.ItemID
+        ORDER BY TotalSold DESC
+    `;
+    
+    db.query(query, (err, results) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(results);
+    });
+});
+
 
 // ============ USER MANAGEMENT ============
 

@@ -14,7 +14,7 @@ function createModal() {
                     <h3 id="modal-title">Confirm Action</h3>
                 </div>
                 <div class="modal-body">
-                    <p id="modal-message">Are you sure?</p>
+                    <div id="modal-message"></div>  <!-- Changed from <p> to <div> -->
                 </div>
                 <div class="modal-footer" id="modal-buttons">
                     <button class="modal-btn modal-btn-cancel" id="modal-cancel">Cancel</button>
@@ -26,7 +26,6 @@ function createModal() {
     
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 }
-
 // Show modal with custom options
 function showModal(options) {
     createModal();
@@ -41,7 +40,7 @@ function showModal(options) {
     // Set content
     icon.innerHTML = options.icon || '❓';
     title.textContent = options.title || 'Confirm Action';
-    message.textContent = options.message || 'Are you sure?';
+    message.innerHTML = options.message || 'Are you sure?';
     confirmBtn.textContent = options.confirmText || 'OK';
     
     // Handle cancel button visibility
