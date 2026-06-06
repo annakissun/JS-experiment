@@ -406,6 +406,60 @@ app.delete('/api/users/:id', (req, res) => {
     });
 });
 
+// ============ DAILY SALES FOR CHARTS (REAL DATA) ============
+app.get('/api/daily-sales', (req, res) => {
+    const { days = 7 } = req.query;
+    
+    const query = `
+        SELECT 
+            DATE(OrderDate) as date,
+            SUM(TotalAmount) as daily_sales,
+            COUNT(*) as order_count,
+            SUM(od.Quantity) as items_sold
+        FROM orders o
+        LEFT JOIN orderdetails od ON o.OrderID = od.OrderID
+        WHERE PaymentStatus = 'completed'
+        GROUP BY DATE(OrderDate)
+        ORDER BY date DESC
+        LIMIT ?
+    `;
+    
+    db.query(query, [parseInt(days)], (err, results) => {
+        if (err) {
+            console.error('Error fetching daily sales:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        
+        // Reverse to show chronological order (oldest to newest)
+        const sortedResults = results.reverse();
+        res.json(sortedResults);
+    });
+});
+
+// ============ DAILY AVERAGE ORDER VALUE ============
+app.get('/api/daily-avg-order', (req, res) => {
+    const query = `
+        SELECT 
+            DATE(OrderDate) as date,
+            AVG(TotalAmount) as avg_order_value,
+            COUNT(*) as order_count
+        FROM orders
+        WHERE PaymentStatus = 'completed'
+        GROUP BY DATE(OrderDate)
+        ORDER BY date DESC
+        LIMIT 7
+    `;
+    
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error('Error fetching daily avg order:', err);
+            return res.status(500).json({ error: err.message });
+        }
+        // Reverse to show chronological order
+        res.json(results.reverse());
+    });
+});
+
 
 
 // ============ START SERVER ============

@@ -153,40 +153,89 @@
             };
         }
 
-        async function loadSalesTrendChart() {
-            const ctx = document.getElementById('salesTrendChart').getContext('2d');
-            
-            // Simulate daily sales data (in real app, fetch from API)
-            const last7Days = [];
-            const salesData = [];
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                last7Days.push(date.toLocaleDateString('en-MY', { weekday: 'short' }));
-                salesData.push(Math.floor(Math.random() * 500) + 100);
-            }
-            
-            if (salesChart) salesChart.destroy();
-            salesChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: last7Days,
-                    datasets: [{
-                        label: 'Sales (RM)',
-                        data: salesData,
-                        borderColor: '#4b672f',
-                        backgroundColor: 'rgba(75, 103, 47, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    }]
+       async function loadSalesTrendChart() {
+    const ctx = document.getElementById('salesTrendChart').getContext('2d');
+    
+    try {
+        // Fetch real daily sales data from database
+        const response = await fetch(`${API_URL}/daily-sales?days=7`);
+        const data = await response.json();
+        
+        console.log('Daily sales data:', data); // Debug - check console
+        
+        // Extract labels and values
+        const labels = data.map(item => {
+            const date = new Date(item.date);
+            return date.toLocaleDateString('en-MY', { weekday: 'short', month: 'short', day: 'numeric' });
+        });
+        
+        const salesData = data.map(item => parseFloat(item.daily_sales) || 0);
+        const orderCounts = data.map(item => item.order_count || 0);
+        
+        if (salesChart) salesChart.destroy();
+        
+        salesChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Daily Sales (RM)',
+                    data: salesData,
+                    borderColor: '#4b672f',
+                    backgroundColor: 'rgba(75, 103, 47, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Number of Orders',
+                    data: orderCounts,
+                    borderColor: '#2c1810',
+                    backgroundColor: 'rgba(44, 24, 16, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1',
+                    borderDash: [5, 5]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (context.dataset.label.includes('Sales')) {
+                                    return `${label}: RM${context.raw.toFixed(2)}`;
+                                }
+                                return `${label}: ${context.raw} orders`;
+                            }
+                        }
+                    }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: { legend: { position: 'top' } }
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Revenue (RM)' },
+                        beginAtZero: true
+                    },
+                    y1: {
+                        position: 'right',
+                        title: { display: true, text: 'Number of Orders' },
+                        beginAtZero: true,
+                        grid: { drawOnChartArea: false }
+                    }
                 }
-            });
-        }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error loading sales trend chart:', error);
+        // Fallback: show message
+        document.getElementById('salesTrendChart').parentElement.innerHTML += 
+            '<p style="color:red; text-align:center;">No sales data available for chart</p>';
+    }
+}
 
         function loadTopItemsChart(items) {
             const ctx = document.getElementById('topItemsChart').getContext('2d');
@@ -243,40 +292,66 @@
             });
         }
 
-        function loadOrderSummaryChart(orders, dates) {
-            const ctx = document.getElementById('orderSummaryChart').getContext('2d');
-            
-            // Calculate average order value by day for the period
-            const last7Days = [];
-            const avgValues = [];
-            for (let i = 6; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                last7Days.push(date.toLocaleDateString('en-MY', { weekday: 'short' }));
-                avgValues.push(Math.floor(Math.random() * 80) + 20);
-            }
-            
-            if (orderSummaryChart) orderSummaryChart.destroy();
-            orderSummaryChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: last7Days,
-                    datasets: [{
-                        label: 'Average Order (RM)',
-                        data: avgValues,
-                        borderColor: '#2c1810',
-                        backgroundColor: 'rgba(44, 24, 16, 0.1)',
-                        tension: 0.3,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    plugins: { legend: { position: 'top' } }
-                }
-            });
+       function loadOrderSummaryChart(orders, dates) {
+    const ctx = document.getElementById('orderSummaryChart').getContext('2d');
+    
+    try {
+        // Filter orders by selected date range
+        const filteredOrders = orders.filter(order => {
+            const orderDate = new Date(order.OrderDate).toISOString().split('T')[0];
+            return orderDate >= dates.start && orderDate <= dates.end;
+        });
+        
+        if (filteredOrders.length === 0) {
+            console.log('No orders in selected date range');
+            return;
         }
+        
+        // Group by date and calculate daily average
+        const dailyData = {};
+        filteredOrders.forEach(order => {
+            const date = new Date(order.OrderDate).toISOString().split('T')[0];
+            if (!dailyData[date]) {
+                dailyData[date] = { total: 0, count: 0 };
+            }
+            dailyData[date].total += parseFloat(order.TotalAmount);
+            dailyData[date].count++;
+        });
+        
+        // Get last 7 days of data
+        const datesList = Object.keys(dailyData).sort().slice(-7);
+        const labels = datesList.map(d => {
+            const date = new Date(d);
+            return date.toLocaleDateString('en-MY', { weekday: 'short', month: 'short', day: 'numeric' });
+        });
+        const avgValues = datesList.map(d => dailyData[d].total / dailyData[d].count);
+        
+        if (orderSummaryChart) orderSummaryChart.destroy();
+        
+        orderSummaryChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Average Order (RM)',
+                    data: avgValues,
+                    borderColor: '#2c1810',
+                    backgroundColor: 'rgba(44, 24, 16, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: { legend: { position: 'top' } }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error loading order summary chart:', error);
+    }
+}
 
         // Load default data
         loadDashboardData();
